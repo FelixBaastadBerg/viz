@@ -75,6 +75,22 @@ video {
 }
 
 .widget-stage--tall { height: 560px; }
+.widget-stage--auto { height: auto; padding-bottom: 20px; }
+
+/* run table for algorithm walkthroughs */
+.run-table {
+  border-collapse: collapse;
+  font-size: 15px;
+  min-width: 420px;
+}
+.run-table th, .run-table td {
+  border: 1px solid var(--kt-border);
+  padding: 6px 14px;
+  text-align: center;
+}
+.run-table th { background: var(--kt-bg-panel); font-weight: 600; }
+.run-table s { color: var(--kt-wrong-ink); }
+.run-table td:first-child { font-weight: 600; text-align: left; }
 
 .quiz-item {
   background: #ffffff;

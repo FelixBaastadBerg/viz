@@ -77,6 +77,9 @@ Malene (id — når du bruker den — viktigste params — quiz-primærverdi):
 - `omdreining-3d` — skivemetoden i 3D: sylinderskiver mot eksakt omdreiningslegeme,
   V_n mot π∫f² — params: f (påkrevd, > 0), intro, range, showTarget, n0, nMax —
   (ingen quiz).
+- `dijkstra-graf` — Dijkstras algoritme steg for steg på en fast demograf
+  (grafalgoritmer, Algdat) — params: intro, source "A".."F", target "A".."F" —
+  (ingen quiz).
 
 ### Eksempler
 

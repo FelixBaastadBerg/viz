@@ -35,6 +35,7 @@ export default defineConfig({
         flows: path.resolve(__dirname, "artifacts/flows.html"),
         riemann: path.resolve(__dirname, "riemann.html"),
         omdreining: path.resolve(__dirname, "omdreining.html"),
+        dijkstra: path.resolve(__dirname, "dijkstra.html"),
         designLab: path.resolve(__dirname, "design-lab.html"),
       },
     },
