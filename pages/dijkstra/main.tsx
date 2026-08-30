@@ -198,6 +198,25 @@ function Page() {
           </p>
         </div>
 
+        <h2>Kjøretid</h2>
+        <p>
+          Med en prioritetskø (binærheap) gjør algoritmen bare to ting: hver node hentes ut
+          av køen én gang (<KFormula tex="V" /> uttak), og hver kant kan gi maks én
+          oppdatering i køen (<KFormula tex="E" /> oppdateringer). Hver kø-operasjon koster{" "}
+          <KFormula tex="O(\log V)" />, så totalen er
+        </p>
+        <div className="formula-box">
+          <KFormula tex="\displaystyle O\bigl((V + E)\cdot \log V\bigr)" />
+        </div>
+        <p>
+          I verste fall er grafen tett — kanter nesten overalt, altså{" "}
+          <KFormula tex="E \approx V^2" /> — så det er antall kanter som virkelig teller.
+          For grafen på denne siden, med <KFormula tex="V = 6" /> og <KFormula tex="E = 9" />,
+          gir det en øvre grense på omtrent{" "}
+          <KFormula tex="(6+9)\cdot\log_2 6 \approx 39" /> kø-operasjoner. Dette dukker ofte
+          opp på eksamen: husk både formelen og hvor faktorene kommer fra.
+        </p>
+
         <h2>Prøv selv: kjør algoritmen steg for steg</h2>
         <div className="widget-stage widget-stage--auto">
           <ThemeProvider theme={arv} fill>
