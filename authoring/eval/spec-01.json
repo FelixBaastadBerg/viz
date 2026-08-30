@@ -1,0 +1,17 @@
+{
+  "template": "funksjon-tangent",
+  "title": "Momentan vekstfart langs grafen",
+  "params": {
+    "f": "x^3 - 3x",
+    "tex": "f(x) = x^3 - 3x",
+    "viewX": [
+      -4,
+      4
+    ],
+    "viewY": [
+      -5,
+      5
+    ],
+    "x0": 1.8
+  }
+}

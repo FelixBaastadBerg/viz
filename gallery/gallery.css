@@ -1,0 +1,77 @@
+/* Gallery scaffold (neutral, theme-agnostic chrome around the themed cells). */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #f4f5f7;
+  color: #24272b;
+  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header {
+  padding: 28px 36px 6px;
+}
+header h1 { font-size: 22px; margin: 0; }
+header p { color: #676d75; margin: 6px 0 0; max-width: 900px; }
+.toc {
+  padding: 10px 36px 0;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.toc a { color: #365fbf; text-decoration: none; }
+.toc a:hover { text-decoration: underline; }
+section.demo {
+  margin: 26px 36px;
+}
+section.demo > h2 {
+  font-size: 16px;
+  margin: 0 0 2px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+section.demo > p.what { color: #676d75; margin: 0 0 10px; font-size: 13px; }
+.knobs {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #e3e5e8;
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.knobs label { display: flex; gap: 6px; align-items: center; color: #444; }
+.knobs button {
+  font: inherit;
+  padding: 4px 12px;
+  border: 1px solid #c9cdd3;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+}
+.knobs button:hover { background: #eef0f3; }
+.cells {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.cell {
+  border: 1px solid #e3e5e8;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.cell .cell-title {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-bottom: 1px solid #e3e5e8;
+  color: #555;
+}
+.cell .kviz-root {
+  height: 340px;
+  position: relative;
+}
+.cell.tall .kviz-root { height: 420px; }
+.cell.short .kviz-root { height: auto; min-height: 0; padding: 18px; }

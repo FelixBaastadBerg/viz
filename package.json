@@ -1,0 +1,38 @@
+{
+  "name": "@kateter/viz",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Kateter's token-locked visualisation component library: 2D (Mafs), 3D (react-three-fiber), quiz layer. Themes are data.",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "shoot": "node scripts/shoot-gallery.mjs"
+  },
+  "dependencies": {
+    "@fontsource/caveat": "^5.2.5",
+    "@fontsource/poppins": "^5.2.5",
+    "@fontsource/space-grotesk": "^5.3.0",
+    "@react-three/drei": "^10",
+    "@react-three/fiber": "^9",
+    "katex": "^0.16.8",
+    "mafs": "^0.21.0",
+    "mathjs": "^15.2.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "three": "0.160.1"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.0",
+    "@types/node": "^26.4.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "@types/three": "0.160.0",
+    "puppeteer-core": "^25.9.0",
+    "typescript": "^5.1.3",
+    "vite": "^5.4.0",
+    "vitest": "^2.1.9"
+  }
+}

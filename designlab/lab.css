@@ -1,0 +1,89 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #fbf8f2;
+  color: #221d15;
+  font-family: "CMU Serif Local", KaTeX_Main, Georgia, serif;
+}
+main { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+h1 { font-size: 28px; margin: 0 0 8px; }
+h2 { font-size: 20px; margin: 42px 0 4px; }
+p { margin: 0 0 12px; max-width: 72ch; }
+.intro { color: #6d6353; }
+
+.lab-frame {
+  border: 1px solid #e9e1d2;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fbf8f2;
+  display: flex;
+  flex-direction: column;
+}
+.lab-frame--row { flex-direction: row; }
+
+.lab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 24px;
+  padding: 14px 22px 10px;
+  font-size: 17px;
+}
+.lab-values { display: flex; gap: 28px; font-size: 16px; }
+
+.lab-plot { position: relative; height: 360px; flex: 1; }
+.lab-plot--tall { height: 420px; }
+
+.lab-footer {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0 14px;
+}
+.lab-slider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 17px;
+}
+.lab-slider input.kviz-slider { width: 300px; }
+
+.lab-rail {
+  width: 240px;
+  border-left: 1px solid #e9e1d2;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 16px;
+}
+.lab-rail-formula { font-size: 15px; }
+.lab-rail-vals { display: flex; flex-direction: column; gap: 8px; }
+.lab-muted { color: #6d6353; font-size: 14px; }
+.lab-rail .lab-slider { margin-top: auto; }
+.lab-rail .lab-slider input.kviz-slider { width: 150px; }
+
+/* v2 additions */
+.lab-valueline {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  padding: 12px 22px 2px;
+  font-size: 17px;
+}
+.lab-valueline--right {
+  justify-content: flex-end;
+  gap: 28px;
+  font-size: 14.5px;
+  padding-top: 6px;
+}
+.lab-slider--big input.kviz-slider {
+  width: 380px;
+  height: 6px;
+  border-radius: 3px;
+}
+.lab-slider--big input.kviz-slider::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  border-width: 3px;
+  box-shadow: 0 1px 4px rgba(93, 72, 35, 0.25);
+}

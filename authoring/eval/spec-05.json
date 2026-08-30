@@ -1,0 +1,19 @@
+{
+  "template": "enhetssirkel",
+  "title": "Finn vinkelen 210°",
+  "params": {
+    "angle0": 40
+  },
+  "quiz": {
+    "question": "Dra punktet til vinkelen $v = 210^\\circ$.",
+    "goal": {
+      "kind": "value-near",
+      "target": 210,
+      "tolerance": 5
+    },
+    "correct": "Riktig! Ved 210° er sin v = −0,5 og cos v = −√3/2.",
+    "incorrect": "Du er på {v}° — fortsett til 210° (tredje kvadrant).",
+    "neutral": "Dra i punktet på sirkelen for å begynne.",
+    "quizId": "vinkel-210"
+  }
+}

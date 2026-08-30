@@ -1,0 +1,8 @@
+{
+  "template": "binomisk-fordeling",
+  "title": "Antall seksere på 12 kast",
+  "params": {
+    "n": 12,
+    "p": 0.167
+  }
+}

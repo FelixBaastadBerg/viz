@@ -1,0 +1,9 @@
+{
+  "template": "eksponentiell-vekst",
+  "title": "Bilens verdi: 12 % verditap per år",
+  "params": {
+    "b0": 3.5,
+    "k": 0.88,
+    "xMax": 12
+  }
+}

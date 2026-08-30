@@ -1,0 +1,10 @@
+{
+  "template": "trig-funksjon",
+  "title": "Vannstanden i havna",
+  "params": {
+    "a": 1.8,
+    "b": 0.5,
+    "c": 2,
+    "d": 2.5
+  }
+}

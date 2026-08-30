@@ -1,0 +1,332 @@
+/* ==========================================================================
+   @kateter/viz component styles. Every colour/size/duration is a --kt-* var
+   injected by <ThemeProvider> — nothing visual is hard-coded here except
+   layout. Host app must serve the CM fonts (see @font-face below) and import
+   "mafs/core.css" + "katex/dist/katex.min.css".
+   ========================================================================== */
+
+@font-face {
+  font-family: "CMU Serif Local";
+  src: url("/fonts-cm/KaTeX_Main-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "CMU Serif Local";
+  src: url("/fonts-cm/KaTeX_Main-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: "CMU Serif Local";
+  src: url("/fonts-cm/KaTeX_Main-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+}
+
+.kviz-root {
+  background: var(--kt-bg);
+  color: var(--kt-text);
+  font-family: var(--kt-font-ui);
+  font-size: var(--kt-size-base);
+}
+
+/* stage */
+.kviz-stage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.kviz-stage--3d {
+  min-height: 300px;
+}
+
+/* Mafs mapping — Mafs is themed via its own custom properties */
+.kviz-root .MafsView {
+  --mafs-bg: var(--kt-bg);
+  --mafs-fg: var(--kt-text);
+  --mafs-line-color: var(--kt-grid);
+  --mafs-origin-color: var(--kt-axis);
+  --grid-line-subdivision-color: var(--kt-grid);
+  --mafs-blue: var(--kt-object);
+  --mafs-yellow: var(--kt-touch);
+  --mafs-red: var(--kt-wrong);
+  --mafs-green: var(--kt-correct);
+  font-family: var(--kt-font-ui);
+}
+
+/* --------------------------------------------------------------- panels */
+.kviz-panel {
+  position: absolute;
+  background: var(--kt-bg-panel);
+  border: 1px solid var(--kt-border);
+  border-radius: 10px;
+  box-shadow: var(--kt-panel-shadow);
+  backdrop-filter: blur(var(--kt-panel-blur));
+  -webkit-backdrop-filter: blur(var(--kt-panel-blur));
+  padding: 14px 18px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity var(--kt-dur-fade) var(--kt-ease-smooth);
+}
+.kviz-panel.kviz-visible {
+  opacity: 1;
+}
+.kviz-panel--readout {
+  top: 22px;
+  left: 22px;
+}
+.kviz-panel--controls {
+  bottom: 22px;
+  left: 22px;
+}
+
+.kviz-formula {
+  font-size: var(--kt-size-formula);
+  color: var(--kt-text);
+  margin: 0 0 8px 0;
+}
+.kviz-formula .katex {
+  font-size: 1em;
+}
+
+.kviz-readout {
+  font-size: var(--kt-size-readout);
+  color: var(--kt-text-muted);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  gap: 1.4em;
+  flex-wrap: wrap;
+}
+.kviz-readout .kviz-value {
+  color: var(--kt-touch-ink);
+}
+
+.kviz-caption {
+  font-size: var(--kt-size-caption);
+  color: var(--kt-text-muted);
+  margin: 6px 0 0 0;
+}
+
+/* --------------------------------------------------------------- slider */
+.kviz-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--kt-size-readout);
+}
+.kviz-slider-row label {
+  color: var(--kt-text-muted);
+  font-style: italic;
+}
+.kviz-slider-row output {
+  color: var(--kt-touch-ink);
+  min-width: 3.5em;
+  font-variant-numeric: tabular-nums;
+}
+input[type="range"].kviz-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  /* content-box regardless of host resets: 4px track + padded hit area
+     (border-box would collapse the track to zero height) */
+  box-sizing: content-box;
+  width: 200px;
+  height: 4px;
+  border-radius: 2px;
+  /* track derived from the axis token — gridDots is too faint on bare paper */
+  background: color-mix(in srgb, var(--kt-axis) 45%, var(--kt-bg));
+  outline: none;
+  cursor: pointer;
+  /* ≥24px effective touch target via padded hit area */
+  padding: 10px 0;
+  background-clip: content-box;
+}
+input[type="range"].kviz-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--kt-touch);
+  border: 2px solid var(--kt-bg);
+  box-shadow: 0 0 0 1px var(--kt-border);
+  transition: transform var(--kt-dur-feedback) var(--kt-ease-smooth);
+}
+input[type="range"].kviz-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+input[type="range"].kviz-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--kt-touch);
+  border: 2px solid var(--kt-bg);
+  transition: transform var(--kt-dur-feedback) var(--kt-ease-smooth);
+}
+input[type="range"].kviz-slider:focus-visible {
+  box-shadow: 0 0 0 2px var(--kt-object);
+  border-radius: 4px;
+}
+
+/* ------------------------------------------- in-figure labels (plate) */
+.kviz-mathlabel--plate foreignObject > div {
+  text-shadow: none !important;
+}
+.kviz-mathlabel--plate .katex {
+  background: var(--kt-bg);
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+/* ------------------------------------------------------- widget intro */
+.kviz-intro {
+  font-family: var(--kt-font-ui);
+  font-size: var(--kt-size-readout);
+  color: var(--kt-text);
+  line-height: 1.55;
+  margin: 0 0 14px 0;
+  max-width: 72ch;
+}
+
+/* ------------------------------------------------- widget scaffolding */
+.kviz-widget {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.kviz-widget .kviz-stage { flex: 1; min-height: 0; }
+.kviz-widget-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0 6px;
+  font-size: var(--kt-size-readout);
+}
+.kviz-widget-values {
+  display: flex;
+  gap: 22px;
+  font-size: var(--kt-size-readout);
+}
+/* Brilliant-scale slider for the primary control */
+input[type="range"].kviz-slider--lead {
+  width: 380px;
+  height: 6px;
+  border-radius: 3px;
+}
+input[type="range"].kviz-slider--lead::-webkit-slider-thumb {
+  width: 24px;
+  height: 24px;
+  border-width: 3px;
+  box-shadow: 0 1px 4px rgba(93, 72, 35, 0.25);
+}
+
+/* ------------------------------------------------------------- quiz card */
+.kviz-quiz-card {
+  max-width: 460px;
+}
+.kviz-quiz-question {
+  font-size: var(--kt-size-question);
+  margin: 0 0 4px 0;
+}
+.kviz-quiz-feedback {
+  font-size: var(--kt-size-readout);
+  margin: 10px 0 0 0;
+  min-height: 1.5em;
+  transition: color var(--kt-dur-feedback) var(--kt-ease-smooth);
+}
+.kviz-quiz-feedback.correct { color: var(--kt-correct-ink); }
+.kviz-quiz-feedback.incorrect { color: var(--kt-wrong-ink); }
+.kviz-quiz-feedback.neutral { color: var(--kt-text-muted); }
+
+/* predict-then-reveal */
+.kviz-predict-choices {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.kviz-choice {
+  font-family: var(--kt-font-ui);
+  font-size: var(--kt-size-base);
+  color: var(--kt-text);
+  background: var(--kt-bg-panel-raised);
+  border: 1px solid var(--kt-border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-height: 40px;
+  cursor: pointer;
+  transition: border-color var(--kt-dur-feedback) var(--kt-ease-smooth),
+    color var(--kt-dur-feedback) var(--kt-ease-smooth);
+}
+.kviz-choice:hover:not(:disabled) {
+  border-color: var(--kt-touch);
+}
+.kviz-choice:focus-visible {
+  outline: 2px solid var(--kt-object);
+  outline-offset: 2px;
+}
+.kviz-choice.correct {
+  border-color: var(--kt-correct);
+  color: var(--kt-correct-ink);
+}
+.kviz-choice.incorrect {
+  border-color: var(--kt-wrong);
+  color: var(--kt-wrong-ink);
+}
+.kviz-choice:disabled {
+  cursor: default;
+}
+.kviz-reveal {
+  animation: kviz-fade var(--kt-dur-fade) var(--kt-ease-smooth);
+}
+@keyframes kviz-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ---------------------------------------------------- theme voices */
+[data-kt-theme="arv"] .kviz-quiz-question {
+  font-family: var(--kt-font-display);
+  font-weight: var(--kt-font-display-weight);
+  font-size: calc(var(--kt-size-question) * 1.35);
+  line-height: 1.15;
+}
+[data-kt-theme="arv"] .kviz-caption {
+  font-family: var(--kt-font-display);
+  font-weight: var(--kt-font-display-weight);
+  font-size: calc(var(--kt-size-caption) * 1.45);
+}
+[data-kt-theme="arv"] .kviz-quiz-feedback {
+  font-family: var(--kt-font-display);
+  font-weight: var(--kt-font-display-weight);
+  font-size: calc(var(--kt-size-readout) * 1.25);
+  line-height: 1.2;
+}
+[data-kt-theme="arv"] .kviz-slider-row label {
+  font-style: normal;
+}
+
+[data-kt-theme="nordlys"] .kviz-panel {
+  border-top-color: rgba(126, 214, 255, 0.28);
+}
+[data-kt-theme="nordlys"] .kviz-readout .kviz-value,
+[data-kt-theme="nordlys"] .kviz-slider-row output {
+  text-shadow: 0 0 12px rgba(255, 200, 92, 0.45);
+}
+[data-kt-theme="nordlys"] .kviz-quiz-feedback.correct {
+  text-shadow: 0 0 12px rgba(113, 222, 140, 0.5);
+}
+
+/* -------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .kviz-panel,
+  .kviz-quiz-feedback,
+  .kviz-choice,
+  .kviz-reveal {
+    transition: none;
+    animation: none;
+  }
+}

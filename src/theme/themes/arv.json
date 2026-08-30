@@ -1,0 +1,119 @@
+{
+  "name": "arv",
+  "label": "Kateter arv",
+  "mode": "light",
+  "case": "The real brand, evolved: warm paper stage, the set-square orange as the touch colour, Poppins UI like the wordmark, a handwritten Caveat voice for questions and captions — the lecture-hall warmth of the 1T videos, in daylight. Math stays Computer Modern. Accents carry a stroke/ink pair so vivid brand colour and WCAG text contrast coexist on white.",
+  "touchNameNb": "det oransje punktet",
+  "stage": {
+    "canvas": "#FBF8F2",
+    "panel": "#FFFFFF",
+    "panelRaised": "#F7F1E6",
+    "border": "#E9E1D2",
+    "panelBlur": 0,
+    "shadow": "0 4px 20px rgba(93, 72, 35, 0.13)"
+  },
+  "structure": {
+    "grid": "#ECE5D8",
+    "gridDots": "#DDD3C1",
+    "axis": "#877C69"
+  },
+  "text": {
+    "primary": "#221D15",
+    "muted": "#6D6353"
+  },
+  "accents": {
+    "object": {
+      "stroke": "#2E77C6",
+      "ink": "#1D5FA8"
+    },
+    "touch": {
+      "stroke": "#D17400",
+      "ink": "#9C5C00"
+    },
+    "right": {
+      "stroke": "#3B9A46",
+      "ink": "#2A7A33"
+    },
+    "wrong": {
+      "stroke": "#D9482B",
+      "ink": "#B23012"
+    },
+    "alt": {
+      "stroke": "#0E8A80",
+      "ink": "#0B6E66"
+    },
+    "alt2": {
+      "stroke": "#8757C8",
+      "ink": "#6E41AC"
+    }
+  },
+  "typography": {
+    "ui": "\"Poppins\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+    "display": "\"Caveat\", \"Bradley Hand\", \"Segoe Print\", cursive",
+    "displayWeight": 600,
+    "fontPackages": [
+      "@fontsource/poppins",
+      "@fontsource/caveat"
+    ],
+    "sizes": {
+      "base": 15,
+      "readout": 17,
+      "formula": 22,
+      "question": 19,
+      "caption": 13,
+      "axisCanvas": 14,
+      "axisLetter": 20
+    }
+  },
+  "stroke": {
+    "curvePrimary": 4,
+    "curveSecondary": 3,
+    "tangent": 3,
+    "axis": 2,
+    "grid": 1
+  },
+  "point": {
+    "radius": 6,
+    "haloRadius": 11,
+    "haloOpacity": 0.22
+  },
+  "motion": {
+    "easeSmooth": "cubic-bezier(0.65, 0, 0.35, 1)",
+    "easeRushInto": "cubic-bezier(0.55, 0, 0.85, 0.4)",
+    "easeRushFrom": "cubic-bezier(0.15, 0.6, 0.45, 1)",
+    "durDraw": 1100,
+    "durFade": 500,
+    "durFeedback": 250,
+    "stagger": 180
+  },
+  "effects": {
+    "glow": false,
+    "glowBlur": 0
+  },
+  "scene3d": {
+    "surfaceOpacity": 0.86,
+    "surfaceRoughness": 0.9,
+    "coordCurveOpacity": 0.4,
+    "columnOpacity": 0.26,
+    "regionFillOpacity": 0.15,
+    "ambient": 1.05,
+    "key": 1.2,
+    "fill": 0.35,
+    "emissive": 0
+  },
+  "manim": {
+    "background_color": "#FBF8F2",
+    "kt_object": "#2E77C6",
+    "kt_touch": "#D17400",
+    "kt_right": "#3B9A46",
+    "kt_wrong": "#D9482B",
+    "kt_alt": "#0E8A80",
+    "kt_alt2": "#8757C8",
+    "kt_text": "#221D15",
+    "kt_muted": "#6D6353",
+    "kt_axis": "#877C69"
+  },
+  "fill": {
+    "areaOpacity": 0.16
+  }
+}

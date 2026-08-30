@@ -1,0 +1,118 @@
+{
+  "name": "nordlys",
+  "label": "Nordlys",
+  "mode": "dark",
+  "case": "The third way: a polar-night stage and aurora accents — ice-cyan for the object of study, aurora gold for what you touch, violet and green for the supporting cast, a soft glow on every live stroke, glassy blurred panels, Space Grotesk chrome. Distinctly Norwegian, and it already looks like the gamified math universe the roadmap points at.",
+  "touchNameNb": "det gylne punktet",
+  "stage": {
+    "canvas": "#0C1720",
+    "panel": "rgba(15, 31, 44, 0.78)",
+    "panelRaised": "rgba(23, 43, 60, 0.85)",
+    "border": "rgba(126, 214, 255, 0.16)",
+    "panelBlur": 14,
+    "shadow": "0 8px 32px rgba(0, 8, 16, 0.5), 0 0 24px rgba(89, 219, 212, 0.05)"
+  },
+  "structure": {
+    "grid": "#142838",
+    "gridDots": "#1C3448",
+    "axis": "#5F7E92"
+  },
+  "text": {
+    "primary": "#E9F4F8",
+    "muted": "#95ACBB"
+  },
+  "accents": {
+    "object": {
+      "stroke": "#59DBD4",
+      "ink": "#59DBD4"
+    },
+    "touch": {
+      "stroke": "#FFC85C",
+      "ink": "#FFC85C"
+    },
+    "right": {
+      "stroke": "#71DE8C",
+      "ink": "#71DE8C"
+    },
+    "wrong": {
+      "stroke": "#FF7D8A",
+      "ink": "#FF7D8A"
+    },
+    "alt": {
+      "stroke": "#AC8FF5",
+      "ink": "#AC8FF5"
+    },
+    "alt2": {
+      "stroke": "#3FBF9C",
+      "ink": "#3FBF9C"
+    }
+  },
+  "typography": {
+    "ui": "\"Space Grotesk\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+    "display": "\"Space Grotesk\", \"Avenir Next\", \"Segoe UI\", system-ui, sans-serif",
+    "displayWeight": 500,
+    "fontPackages": [
+      "@fontsource/space-grotesk"
+    ],
+    "sizes": {
+      "base": 15,
+      "readout": 17,
+      "formula": 22,
+      "question": 19,
+      "caption": 13,
+      "axisCanvas": 14,
+      "axisLetter": 20
+    }
+  },
+  "stroke": {
+    "curvePrimary": 4,
+    "curveSecondary": 3,
+    "tangent": 3,
+    "axis": 2,
+    "grid": 1
+  },
+  "point": {
+    "radius": 6,
+    "haloRadius": 12,
+    "haloOpacity": 0.3
+  },
+  "motion": {
+    "easeSmooth": "cubic-bezier(0.65, 0, 0.35, 1)",
+    "easeRushInto": "cubic-bezier(0.55, 0, 0.85, 0.4)",
+    "easeRushFrom": "cubic-bezier(0.15, 0.6, 0.45, 1)",
+    "durDraw": 1100,
+    "durFade": 500,
+    "durFeedback": 250,
+    "stagger": 180
+  },
+  "effects": {
+    "glow": true,
+    "glowBlur": 7
+  },
+  "scene3d": {
+    "surfaceOpacity": 0.6,
+    "surfaceRoughness": 0.7,
+    "coordCurveOpacity": 0.35,
+    "columnOpacity": 0.32,
+    "regionFillOpacity": 0.18,
+    "ambient": 0.8,
+    "key": 1.5,
+    "fill": 0.45,
+    "emissive": 0.3
+  },
+  "manim": {
+    "background_color": "#0C1720",
+    "kt_object": "#59DBD4",
+    "kt_touch": "#FFC85C",
+    "kt_right": "#71DE8C",
+    "kt_wrong": "#FF7D8A",
+    "kt_alt": "#AC8FF5",
+    "kt_alt2": "#3FBF9C",
+    "kt_text": "#E9F4F8",
+    "kt_muted": "#95ACBB",
+    "kt_axis": "#5F7E92"
+  },
+  "fill": {
+    "areaOpacity": 0.2
+  }
+}

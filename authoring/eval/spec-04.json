@@ -1,0 +1,16 @@
+{
+  "template": "derivert-graf",
+  "title": "Fortegnet til f′ styrer f",
+  "params": {
+    "f": "x^3 - 3x^2",
+    "viewX": [
+      -2,
+      4
+    ],
+    "viewY": [
+      -5,
+      5
+    ],
+    "x0": 0.5
+  }
+}

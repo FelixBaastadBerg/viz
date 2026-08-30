@@ -1,0 +1,31 @@
+{
+  "template": "likning-grafisk",
+  "title": "Grafisk løsning av x² = x + 2",
+  "params": {
+    "f": "x^2",
+    "g": "x + 2",
+    "tex": "x^2 = x + 2",
+    "viewX": [
+      -4,
+      4
+    ],
+    "viewY": [
+      -2,
+      7
+    ],
+    "x0": 0.5
+  },
+  "quiz": {
+    "question": "Dra punktet til et skjæringspunkt, der $x^2 = x + 2$.",
+    "subtitleTex": "f(x) = x^2, \\quad g(x) = x + 2",
+    "goal": {
+      "kind": "expr-zero",
+      "expr": "x^2 - x - 2",
+      "tolerance": 0.25
+    },
+    "correct": "Riktig! I skjæringspunktet er f(x) = g(x), så x = {v} er en løsning.",
+    "incorrect": "Ikke helt — ved x = {v} er ikke grafene like. Dra dit de krysser.",
+    "neutral": "Dra i punktet for å begynne.",
+    "quizId": "skjaering-parabel-linje"
+  }
+}
