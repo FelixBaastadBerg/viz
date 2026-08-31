@@ -1,0 +1,9 @@
+/* Host-app convenience bundle: everything @kateter/viz needs besides kviz.css.
+   Imported once in the host's global CSS entry (_app.tsx in Next). */
+@import "mafs/core.css";
+@import "mafs/font.css";
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/caveat/600.css";
+@import "@fontsource/caveat/700.css";
