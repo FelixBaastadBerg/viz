@@ -210,7 +210,7 @@ function DijkstraGraf({ params }: { params: P }) {
         })}
       </svg>
 
-      <p className="kviz-intro" style={{ minHeight: "2.6em", marginTop: 4 }}>
+      <p className="kviz-intro kviz-status" style={{ minHeight: "2.6em", marginTop: 4 }}>
         <KMixed text={status.replace(/\*\*(.*?)\*\*/g, "$1")} />
       </p>
 
