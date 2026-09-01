@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Polygon, Point as MafsPoint } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KArea, KLabel, useRoleColor } from "../../2d/primitives";
-import { KPanel, KFormula, KReadout, KCaption, KSlider } from "../../chrome";
+import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
@@ -18,7 +18,6 @@ function FoelgeRekke({ params }: { params: P }) {
   const kind = params.kind as string;
   const objectColor = useRoleColor("object");
   const touchColor = useRoleColor("touch");
-  const t = useKtTheme();
   const [n, setN] = useState(Math.min(5, nMax));
 
   const terms = useMemo(
@@ -35,7 +34,7 @@ function FoelgeRekke({ params }: { params: P }) {
 
   return (
     <>
-      <KPlot viewBox={{ x: [0, nMax + 1], y: [yMin, yMax] }}>
+      <KPlot viewBox={{ x: [0, nMax + 1], y: [yMin, yMax] }} height={(params.height as number) ?? 340}>
         {values.map((v, i) => (
           <MafsPoint
             key={i}
@@ -62,7 +61,6 @@ function FoelgeRekke({ params }: { params: P }) {
               : []),
           ]}
         />
-        <KCaption>{t.touchNameNb.replace("punktet", "markerte leddene")} er de n første.</KCaption>
       </KPanel>
       <KPanel position="controls">
         <KSlider label="n" min={1} max={nMax} step={1} value={n} onChange={(v) => setN(Math.round(v))} digits={0} />
@@ -81,6 +79,7 @@ registerTemplate({
     tex: { type: { kind: "string" }, default: "", doc: "KaTeX-visning, f.eks. \"a_n = 3\\\\cdot(1/2)^{n-1}\"" },
     kind: { type: { kind: "string", oneOf: ["sequence", "partial-sums"] }, default: "sequence", doc: "vis leddene eller delsummene S_n" },
     nMax: { type: { kind: "number", min: 3, max: 60 }, default: 20, doc: "antall ledd" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "foelge-rekke",
@@ -116,7 +115,7 @@ function BinomiskFordeling({ params }: { params: P }) {
   const w = 0.38;
   return (
     <>
-      <KPlot viewBox={{ x: [-1, Math.max(n + 1, 8)], y: [-yMax * 0.08, yMax] }}>
+      <KPlot viewBox={{ x: [-1, Math.max(n + 1, 8)], y: [-yMax * 0.08, yMax] }} height={(params.height as number) ?? 340}>
         {pmf.map((q, k) => (
           <Polygon
             key={k}
@@ -132,7 +131,6 @@ function BinomiskFordeling({ params }: { params: P }) {
         <p className="kviz-formula">
           <KFormula tex={`X \\sim \\text{Bin}(${n},\\; ${fmt(p, 2)})`} />
         </p>
-        <KCaption>Søylen ved forventningsverdien er framhevet.</KCaption>
       </KPanel>
       <KPanel position="controls">
         <KSlider label="n" min={1} max={40} step={1} value={n} onChange={(v) => setN(Math.round(v))} digits={0} />
@@ -150,6 +148,7 @@ registerTemplate({
   params: {
     n: { type: { kind: "number", min: 1, max: 40 }, default: 10, doc: "antall forsøk (start)" },
     p: { type: { kind: "number", min: 0.01, max: 0.99 }, default: 0.3, doc: "suksess-sannsynlighet (start)" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "binomisk-fordeling",
@@ -170,7 +169,7 @@ function NormalFordeling({ params }: { params: P }) {
   const prob = simpson(phi, a, b, 128);
   return (
     <>
-      <KPlot viewBox={{ x: [mu - 5 * 1.6, mu + 5 * 1.6], y: [-0.06, 0.75] }}>
+      <KPlot viewBox={{ x: [mu - 5 * 1.6, mu + 5 * 1.6], y: [-0.06, 0.75] }} height={(params.height as number) ?? 340}>
         <KCurve f={phi} />
         <KArea f={phi} from={a} to={b} role="touch" />
         <KLabel tex={`P(${fmt(a, 1)} \\le X \\le ${fmt(b, 1)}) = ${fmt(prob, 3)}`} at={[mu, 0.68]} role="touch" />
@@ -200,6 +199,7 @@ registerTemplate({
     sigma: { type: { kind: "number", min: 0.1 }, default: 1, doc: "standardavvik (start)" },
     from: { type: { kind: "number" }, default: -1, doc: "nedre grense (start)" },
     to: { type: { kind: "number" }, default: 1, doc: "øvre grense (start)" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "normalfordeling",

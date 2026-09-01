@@ -18,6 +18,8 @@ export interface KPlotProps {
       labels never crowd (W6). */
   xTick?: number;
   yTick?: number;
+  /** "equal" preserves a 1:1 unit aspect (circles stay round). */
+  aspect?: "auto" | "equal";
   children?: ReactNode;
 }
 
@@ -35,6 +37,7 @@ export function KPlot({
   subdivisions = false,
   xTick = 1,
   yTick = 1,
+  aspect = "auto",
   children,
 }: KPlotProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -44,7 +47,7 @@ export function KPlot({
     <div ref={ref} className="kviz-stage" data-kt-theme={theme.name}>
       <Mafs
         viewBox={viewBox}
-        preserveAspectRatio={false}
+        preserveAspectRatio={aspect === "equal" ? "contain" : false}
         pan={pan}
         zoom={zoom}
         height={height ?? size.height}

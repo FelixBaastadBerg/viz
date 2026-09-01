@@ -67,7 +67,7 @@ function RiemannSum({ params }: { params: P }) {
         <p className="kviz-intro"><KMixed text={params.intro as string} /></p>
       ) : null}
 
-      <KPlot viewBox={view}>
+      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
         {showTarget && (
           <Polygon points={targetPts} color={object} fillOpacity={0.12}
             strokeOpacity={0} weight={0.1} />
@@ -125,6 +125,7 @@ registerTemplate({
     exactAt: { type: { kind: "numbers" }, default: undefined, doc: "valgfri plassering [x, y] for integralverdien" },
     viewX: { type: { kind: "range" }, default: [-0.4, 2.4], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-0.5, 4.5], doc: "y-utsnitt" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "riemann-sum",

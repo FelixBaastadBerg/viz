@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Polygon, Line as MafsLine, Circle } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KPoint, KVector, KLabel, useRoleColor } from "../../2d/primitives";
-import { KPanel, KFormula, KReadout, KCaption, KSlider } from "../../chrome";
+import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import type { QuizWrapper } from "../types";
@@ -25,7 +25,11 @@ function Enhetssirkel({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
   const alt2Color = useRoleColor("alt2");
   return (
     <>
-      <KPlot viewBox={{ x: [-2.6, 2.6], y: [-1.7, 1.7] }}>
+      <KPlot
+        viewBox={{ x: [-1.6, 1.6], y: [-1.6, 1.6] }}
+        aspect="equal"
+        height={(params.height as number) ?? 300}
+      >
         <Circle center={[0, 0]} radius={1} color={objectColor} fillOpacity={0} weight={t.stroke.curveSecondary} />
         {/* radius + angle arm */}
         <MafsLine.Segment point1={[0, 0]} point2={[cx, sy]} color={objectColor} weight={t.stroke.tangent} />
@@ -57,7 +61,6 @@ function Enhetssirkel({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
               { label: "\\sin v", value: sy, role: "alt2" },
             ]}
           />
-          <KCaption>Dra {t.touchNameNb} rundt sirkelen.</KCaption>
         </KPanel>
       )}
     </>
@@ -71,6 +74,7 @@ registerTemplate({
   curriculum: ["1T", "R1"],
   params: {
     angle0: { type: { kind: "number" }, default: 40, doc: "startvinkel i grader" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 300, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   quizValue: "vinkelen i grader (0–360)",
   example: {
@@ -83,14 +87,17 @@ registerTemplate({
 
 /* -------------------------------------------------------------- vektorer */
 function Vektorer({ params }: { params: P }) {
-  const t = useKtTheme();
   const [u, setU] = useState(params.u as [number, number]);
   const [v, setV] = useState(params.v as [number, number]);
   const op = params.op as string;
   const sum: [number, number] = op === "diff" ? [u[0] - v[0], u[1] - v[1]] : [u[0] + v[0], u[1] + v[1]];
   return (
     <>
-      <KPlot viewBox={{ x: [-5, 5], y: [-4, 4] }}>
+      <KPlot
+        viewBox={{ x: [-4.5, 4.5], y: [-4, 4] }}
+        aspect="equal"
+        height={(params.height as number) ?? 340}
+      >
         <KVector tip={u} role="object" />
         <KVector tip={v} role="alt" />
         <KVector tip={sum} role="touch" />
@@ -117,7 +124,6 @@ function Vektorer({ params }: { params: P }) {
             },
           ]}
         />
-        <KCaption>Dra vektorspissene. Parallellogrammet viser {op === "diff" ? "differansen" : "summen"}.</KCaption>
       </KPanel>
     </>
   );
@@ -132,6 +138,7 @@ registerTemplate({
     u: { type: { kind: "numbers" }, default: [2, 1], doc: "vektor u som [x, y]" },
     v: { type: { kind: "numbers" }, default: [1, 2], doc: "vektor v som [x, y]" },
     op: { type: { kind: "string", oneOf: ["sum", "diff"] }, default: "sum", doc: "operasjon" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "vektorer",
@@ -171,7 +178,12 @@ function LinTrans({ params }: { params: P }) {
   const shape = lerp.map((f) => f(s));
   return (
     <>
-      <KPlot viewBox={{ x: [-4, 4], y: [-3, 3] }} subdivisions>
+      <KPlot
+        viewBox={{ x: [-4, 4], y: [-3, 3] }}
+        subdivisions
+        aspect="equal"
+        height={(params.height as number) ?? 340}
+      >
         <Polygon points={fig} color={objectColor} fillOpacity={t.fill.areaOpacity / 2} weight={t.stroke.curveSecondary} />
         <Polygon points={shape} color={touchColor} fillOpacity={t.fill.areaOpacity} weight={t.stroke.curvePrimary} />
         {/* transformed basis vectors */}
@@ -189,7 +201,6 @@ function LinTrans({ params }: { params: P }) {
             )}`}
           />
         </p>
-        <KCaption>Glideren interpolerer fra identitet til A. Basisvektorene følger med.</KCaption>
       </KPanel>
       <KPanel position="controls">
         <KSlider label="t" min={0} max={1} step={0.01} value={s} onChange={setS} />
@@ -206,6 +217,7 @@ registerTemplate({
   params: {
     matrix: { type: { kind: "matrix2" }, required: true, doc: "2×2-matrisen [[a,b],[c,d]]" },
     figure: { type: { kind: "string", oneOf: Object.keys(FIGURES) }, default: "hus", doc: "figuren som transformeres" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "lineaer-transformasjon",

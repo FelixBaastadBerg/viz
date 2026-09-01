@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KTangent, KPoint, KArea, KLabel } from "../../2d/primitives";
-import { KPanel, KFormula, KReadout, KCaption, KSlider } from "../../chrome";
-import { useKtTheme } from "../../theme/ThemeProvider";
+import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
 import type { QuizWrapper } from "../types";
@@ -14,14 +13,13 @@ type P = Record<string, unknown>;
 
 /* ------------------------------------------------------- funksjon-tangent */
 function FunksjonTangent({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
-  const t = useKtTheme();
   const f = fn1(params.f as string);
   const [x0, setX0] = useState(params.x0 as number);
   const [touched, setTouched] = useState(false);
   const view = { x: params.viewX as [number, number], y: params.viewY as [number, number] };
   return (
     <>
-      <KPlot viewBox={view}>
+      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
         <KCurve f={f} drawIn delay={150} />
         <KTangent f={f} x={x0} fadeIn delay={900} />
         <KPoint
@@ -49,7 +47,6 @@ function FunksjonTangent({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
               { label: "f'(x)", value: ddx(f, x0), role: "touch" },
             ]}
           />
-          <KCaption>Dra {t.touchNameNb} langs kurven.</KCaption>
         </KPanel>
       )}
     </>
@@ -67,6 +64,7 @@ registerTemplate({
     viewX: { type: { kind: "range" }, default: [-6, 6], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-4, 4], doc: "y-utsnitt" },
     x0: { type: { kind: "number" }, default: 1, doc: "startposisjon for punktet" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   quizValue: "x-posisjonen til det dragbare punktet",
   example: {
@@ -79,21 +77,21 @@ registerTemplate({
 
 /* --------------------------------------------------------- derivert-graf */
 function DerivertGraf({ params }: { params: P }) {
-  const t = useKtTheme();
   const f = fn1(params.f as string);
   const df = (x: number) => ddx(f, x);
   const [x0, setX0] = useState(params.x0 as number);
   const view = { x: params.viewX as [number, number], y: params.viewY as [number, number] };
+  const halfHeight = ((params.height as number) ?? 480) / 2;
   return (
     <>
-      <div style={{ display: "grid", gridTemplateRows: "1fr 1fr", height: "100%" }}>
-        <KPlot viewBox={view}>
+      <div style={{ display: "grid", gridTemplateRows: "1fr 1fr" }}>
+        <KPlot viewBox={view} height={halfHeight}>
           <KCurve f={f} />
           <KTangent f={f} x={x0} />
           <KPoint point={[x0, f(x0)]} constrain={(x) => [x, f(x)]} onMove={([x]) => setX0(x)} />
           <KLabel tex="f" at={[view.x[1] - 0.7, f(view.x[1] - 0.9) + 0.6]} role="object" />
         </KPlot>
-        <KPlot viewBox={view}>
+        <KPlot viewBox={view} height={halfHeight}>
           <KCurve f={df} role="alt" />
           <KPoint point={[x0, df(x0)]} constrain={(x) => [x, df(x)]} onMove={([x]) => setX0(x)} />
           <KLabel tex="f'" at={[view.x[1] - 0.7, df(view.x[1] - 0.9) + 0.6]} role="alt" />
@@ -107,7 +105,6 @@ function DerivertGraf({ params }: { params: P }) {
             { label: "f'(x)", value: df(x0), role: "alt" },
           ]}
         />
-        <KCaption>Dra {t.touchNameNb} — begge grafene følger samme x.</KCaption>
       </KPanel>
     </>
   );
@@ -123,6 +120,7 @@ registerTemplate({
     viewX: { type: { kind: "range" }, default: [-5, 5], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-4, 4], doc: "y-utsnitt (begge grafer)" },
     x0: { type: { kind: "number" }, default: 1, doc: "startposisjon" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 480, doc: "samlet høyde i px for de to grafene (W6)" },
   },
   example: {
     template: "derivert-graf",
@@ -141,7 +139,7 @@ function ArealUnderKurve({ params }: { params: P }) {
   const V = simpson(f, a, b);
   return (
     <>
-      <KPlot viewBox={view}>
+      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
         <KCurve f={f} />
         <KArea f={f} from={a} to={b} />
         <KLabel tex={`\\int_{${fmt(a, 1)}}^{${fmt(b, 1)}} f(x)\\,dx = ${fmt(V, 3)}`}
@@ -174,6 +172,7 @@ registerTemplate({
     to: { type: { kind: "number" }, default: 2, doc: "øvre grense (start)" },
     viewX: { type: { kind: "range" }, default: [-4, 4], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-1, 6], doc: "y-utsnitt" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "areal-under-kurve",
@@ -192,7 +191,7 @@ function TrigFunksjon({ params }: { params: P }) {
   const f = (x: number) => A * Math.sin(B * (x + C)) + D;
   return (
     <>
-      <KPlot viewBox={{ x: [-7, 7], y: [-4, 4] }}>
+      <KPlot viewBox={{ x: [-7, 7], y: [-4, 4] }} height={(params.height as number) ?? 340}>
         <KCurve f={(x) => Math.sin(x)} role="alt" weight="secondary" />
         <KCurve f={f} />
       </KPlot>
@@ -200,7 +199,6 @@ function TrigFunksjon({ params }: { params: P }) {
         <p className="kviz-formula">
           <KFormula tex={`f(x) = ${fmt(A, 1)}\\sin(${fmt(B, 1)}(x + ${fmt(C, 1)})) + ${fmt(D, 1)}`} />
         </p>
-        <KCaption>Grå kurve: sin x som referanse. Endre A, B, C, D.</KCaption>
       </KPanel>
       <KPanel position="controls">
         <KSlider label="A" min={-3} max={3} step={0.1} value={A} onChange={setA} digits={1} />
@@ -222,6 +220,7 @@ registerTemplate({
     b: { type: { kind: "number" }, default: 1, doc: "vinkelfrekvens B (start)" },
     c: { type: { kind: "number" }, default: 0, doc: "faseforskyvning C (start)" },
     d: { type: { kind: "number" }, default: 0, doc: "likevektslinje D (start)" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "trig-funksjon",

@@ -56,30 +56,32 @@
   font-family: var(--kt-font-ui);
 }
 
-/* --------------------------------------------------------------- panels */
+/* --------------------------------------------------------------- panels
+   W6: panels flow BELOW the figure — never absolutely positioned over it,
+   which collided with surrounding text in embedded contexts. */
 .kviz-panel {
-  position: absolute;
-  background: var(--kt-bg-panel);
-  border: 1px solid var(--kt-border);
-  border-radius: 10px;
-  box-shadow: var(--kt-panel-shadow);
-  backdrop-filter: blur(var(--kt-panel-blur));
-  -webkit-backdrop-filter: blur(var(--kt-panel-blur));
-  padding: 14px 18px;
-  z-index: 10;
+  position: static;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 10px 0 2px;
   opacity: 0;
   transition: opacity var(--kt-dur-fade) var(--kt-ease-smooth);
 }
 .kviz-panel.kviz-visible {
   opacity: 1;
 }
-.kviz-panel--readout {
-  top: 22px;
-  left: 22px;
-}
+.kviz-panel--readout,
 .kviz-panel--controls {
-  bottom: 22px;
-  left: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+.kviz-panel--readout .kviz-formula,
+.kviz-panel--readout .kviz-readout {
+  margin: 0;
 }
 
 .kviz-formula {

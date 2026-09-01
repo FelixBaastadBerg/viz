@@ -9,7 +9,7 @@ import { useMemo, useState } from "react";
 import { Polyline, Vector } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KPoint, KLabel, useRoleColor } from "../../2d/primitives";
-import { KPanel, KFormula, KCaption, KSlider } from "../../chrome";
+import { KPanel, KFormula, KSlider } from "../../chrome";
 import { useKtTheme, glowFilter } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
@@ -47,7 +47,7 @@ function ParametriskKurve({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
 
   return (
     <>
-      <KPlot viewBox={view}>
+      <KPlot viewBox={view} aspect="equal" height={(params.height as number) ?? 340}>
         <g style={{ filter: glowFilter(t, objectColor) }}>
           <Polyline points={curvePts} color={objectColor} weight={t.stroke.curvePrimary} />
         </g>
@@ -87,9 +87,6 @@ function ParametriskKurve({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
               s = <span className="kviz-value">{fmt(arcLen, 3)}</span>
             </span>
           </p>
-          <KCaption>
-            Dra {t.touchNameNb} langs kurven eller bruk glideren. s er buelengden fra t = {fmt(ta, 1)}.
-          </KCaption>
         </KPanel>
       )}
       <KPanel position="controls">
@@ -132,6 +129,7 @@ registerTemplate({
     viewX: { type: { kind: "range" }, default: [-1, 4], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-1, 3], doc: "y-utsnitt" },
     showVelocity: { type: { kind: "boolean" }, default: true, doc: "vis fartsvektoren (f'(t), g'(t))" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   quizValue: "parameterverdien t til punktet",
   example: {

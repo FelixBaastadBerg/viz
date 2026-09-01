@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTransformContext, vec } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KPoint, KLabel } from "../../2d/primitives";
-import { KPanel, KFormula, KReadout, KCaption, KSlider } from "../../chrome";
+import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
 import { KScene3D } from "../../3d/KScene3D";
 import { KAxes3D } from "../../3d/KAxes3D";
 import { KSurface } from "../../3d/KSurface";
@@ -19,7 +19,6 @@ type P = Record<string, unknown>;
 
 /* -------------------------------------------------------- likning-grafisk */
 function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
-  const t = useKtTheme();
   const f = fn1(params.f as string);
   const g = fn1(params.g as string);
   const view = { x: params.viewX as [number, number], y: params.viewY as [number, number] };
@@ -28,7 +27,7 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
   const gap = f(x0) - g(x0);
   return (
     <>
-      <KPlot viewBox={view}>
+      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
         <KCurve f={f} />
         <KCurve f={g} role="alt" weight="secondary" />
         <KPoint
@@ -65,10 +64,6 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
               ]}
             />
           )}
-          <KCaption>
-            {(params.caption as string) ||
-              `Dra ${t.touchNameNb} dit hvor grafene skjærer hverandre.`}
-          </KCaption>
         </KPanel>
       )}
     </>
@@ -88,7 +83,8 @@ registerTemplate({
     viewY: { type: { kind: "range" }, default: [-4, 6], doc: "y-utsnitt" },
     x0: { type: { kind: "number" }, default: 0, doc: "startposisjon" },
     readout: { type: { kind: "string", oneOf: ["differanse", "verdier"] }, default: "differanse", doc: "vis f−g (likninger) eller f og g hver for seg (grenser)" },
-    caption: { type: { kind: "string" }, default: "", doc: "egen instruksjonstekst under avlesningene" },
+    caption: { type: { kind: "string" }, default: "", doc: "utgått (W6: ingen instruksjonstekst på widgets) — ignoreres, beholdt for bakoverkompatibilitet" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   quizValue: "x-posisjonen til punktet (bruk expr-zero med f−g for skjæring)",
   example: {
@@ -125,7 +121,6 @@ function FlateVolum({ params }: { params: P }) {
             V ≈ <span className="kviz-value">{fmt(V, 3)}</span>
           </span>
         </p>
-        <KCaption>Dra for å rotere. Juster området R med gliderne.</KCaption>
       </KPanel>
       <KPanel position="controls">
         <KSlider label="a" min={-domain} max={domain - GAP} step={0.05} value={a}
