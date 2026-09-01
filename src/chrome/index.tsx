@@ -1,4 +1,4 @@
-import { useId, useMemo, type ReactNode } from "react";
+import { useId, useMemo, type CSSProperties, type ReactNode } from "react";
 import katex from "katex";
 import { useKtTheme } from "../theme/ThemeProvider";
 import type { KtRole } from "../theme/types";
@@ -107,6 +107,130 @@ export function KReadout({ items }: { items: KReadoutItem[] }) {
         </span>
       ))}
     </p>
+  );
+}
+
+/* ----------------------------------------------------------------- KLegend */
+export type KLegendCorner = "tl" | "tr" | "bl" | "br";
+
+export interface KLegendItem {
+  /** Label, rendered as KaTeX. */
+  label: string;
+  /** Live value. Omit for a label-only row (curve identification). */
+  value?: number | string;
+  digits?: number;
+  role?: KtRole;
+}
+
+export interface KLegendProps {
+  /** Which corner of the figure the box sits in (default "tl"). */
+  corner?: KLegendCorner;
+  items: KLegendItem[];
+}
+
+/**
+ * W7: matplotlib-style legend box INSIDE the figure — white card, thin
+ * border, one row per value with a round marker in the value's role colour.
+ * Render it as a sibling of <KPlot> inside <KFig> (which provides the
+ * position:relative wrapper). Critical styles are inline: embedded contexts
+ * (TipTap node views) carry a hostile `div[data-node-view-wrapper] div`
+ * rule that overrides class CSS — inline always wins.
+ */
+export function KLegend({ corner = "tl", items }: KLegendProps) {
+  const theme = useKtTheme();
+  const pos: CSSProperties = {
+    ...(corner[0] === "t" ? { top: 10 } : { bottom: 10 }),
+    ...(corner[1] === "l" ? { left: 12 } : { right: 12 }),
+  };
+  return (
+    <div
+      className="kviz-legend"
+      style={{
+        position: "absolute",
+        ...pos,
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        gap: 3,
+        width: "auto",
+        maxWidth: "calc(100% - 24px)",
+        boxSizing: "border-box",
+        background: "#fff",
+        border: "1px solid var(--kt-border)",
+        borderRadius: 8,
+        boxShadow: "0 1px 4px rgba(28,25,23,.10)",
+        padding: "8px 12px",
+        zIndex: 2,
+        pointerEvents: "none",
+        fontSize: "var(--kt-size-readout)",
+        lineHeight: 1.4,
+      }}
+    >
+      {items.map((it, i) => {
+        const acc = it.role ? theme.accents[it.role] : undefined;
+        return (
+          <div
+            key={i}
+            className="kviz-legend-row"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 7,
+              width: "auto",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span
+              className="kviz-legend-marker"
+              style={{
+                display: "inline-block",
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                flex: "0 0 10px",
+                background: acc ? acc.stroke : "var(--kt-text-muted)",
+              }}
+            />
+            <span style={{ display: "inline-block", width: "auto", color: acc ? acc.ink : "var(--kt-text)" }}>
+              <KFormula tex={it.label} />
+            </span>
+            {it.value !== undefined && (
+              <>
+                <span style={{ display: "inline-block", width: "auto", color: "var(--kt-text-muted)" }}>=</span>
+                <span
+                  className="kviz-legend-value"
+                  style={{
+                    display: "inline-block",
+                    width: "auto",
+                    fontVariantNumeric: "tabular-nums",
+                    color: acc ? acc.ink : "var(--kt-text)",
+                  }}
+                >
+                  {typeof it.value === "number" ? fmt(it.value, it.digits ?? 2) : it.value}
+                </span>
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------- KFig */
+/**
+ * Figure wrapper: position:relative around the plot so a <KLegend> can be
+ * absolutely positioned over it (W7). Critical styles inline — see KLegend.
+ */
+export function KFig({ legend, children }: { legend?: ReactNode; children: ReactNode }) {
+  return (
+    <div
+      className="kviz-figwrap"
+      style={{ position: "relative", display: "block", width: "auto" }}
+    >
+      {children}
+      {legend}
+    </div>
   );
 }
 

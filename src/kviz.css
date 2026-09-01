@@ -141,6 +141,23 @@
   color: var(--kt-text-muted);
 }
 
+/* ------------------------------------------------- in-figure legend (W7)
+   Matplotlib-style value box INSIDE the plot. The critical styles (position,
+   flex, width, background) are set inline by <KLegend> because embedded
+   contexts (TipTap's div[data-node-view-wrapper] div rule) override class
+   CSS — these rules are the non-critical polish. */
+.kviz-legend {
+  font-family: var(--kt-font-ui);
+  font-size: var(--kt-size-readout);
+  color: var(--kt-text);
+}
+.kviz-legend .katex {
+  font-size: 1em;
+}
+.kviz-legend-value {
+  font-variant-numeric: tabular-nums;
+}
+
 .kviz-caption {
   font-size: var(--kt-size-caption);
   color: var(--kt-text-muted);

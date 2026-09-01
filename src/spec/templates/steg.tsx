@@ -8,8 +8,8 @@
 import { useMemo, useState } from "react";
 import { Line as MafsLine } from "mafs";
 import { KPlot } from "../../2d/KPlot";
-import { KCurve, KPoint } from "../../2d/primitives";
-import { KFormula, KReadout } from "../../chrome";
+import { KCurve, KPoint, KLabel, curveLabelPos } from "../../2d/primitives";
+import { KFormula, KReadout, KFig, KLegend } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
@@ -259,22 +259,41 @@ function FikspunktSteg({ params }: { params: P }) {
 
   return (
     <div className="kviz-widget">
-      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
-        <KCurve f={(x) => x} role="alt" weight="secondary" />
-        <KCurve f={g} />
-        {segs.map(([p1, p2], i) => (
-          <MafsLine.Segment key={i} point1={p1} point2={p2} color={touch}
-            weight={t.stroke.tangent} />
-        ))}
-        {Number.isFinite(gxn) && <KPoint point={[xn, gxn]} />}
-      </KPlot>
-      <div className="kviz-widget-controls" style={{ justifyContent: "center", gap: 10 }}>
-        <KReadout
-          items={[
-            { label: "n", value: n, digits: 0 },
-            { label: "x_n", value: xn, digits: 4, role: "touch" },
+      <KFig
+        legend={
+          <KLegend
+            corner="tl"
+            items={[
+              { label: "n", value: n, digits: 0, role: "touch" },
+              { label: "x_n", value: xn, digits: 4, role: "touch" },
+            ]}
+          />
+        }
+      >
+        <KPlot viewBox={view} height={(params.height as number) ?? 340}>
+          <KCurve f={(x) => x} role="alt" weight="secondary" />
+          <KCurve f={g} />
+          <KLabel
+          tex="y = x"
+          at={[
+            Math.min(view.x[1], view.y[1]) - 0.18 * (view.y[1] - view.y[0]),
+            Math.min(view.x[1], view.y[1]) - 0.08 * (view.y[1] - view.y[0]),
           ]}
+          role="alt"
         />
+          <KLabel
+            tex={(params.gLabel as string) || "y = g(x)"}
+            at={curveLabelPos(g, view, 0.24, -0.09)}
+            role="object"
+          />
+          {segs.map(([p1, p2], i) => (
+            <MafsLine.Segment key={i} point1={p1} point2={p2} color={touch}
+              weight={t.stroke.tangent} />
+          ))}
+          {Number.isFinite(gxn) && <KPoint point={[xn, gxn]} />}
+        </KPlot>
+      </KFig>
+      <div className="kviz-widget-controls" style={{ justifyContent: "center", gap: 10 }}>
         <button className="kviz-btn kviz-btn--primary" disabled={n >= maxN}
           onClick={() => setN((i) => Math.min(maxN, i + 1))}>Neste →</button>
         <button className="kviz-btn" disabled={n === 0}
@@ -291,6 +310,7 @@ registerTemplate({
   curriculum: ["universitet"],
   params: {
     g: { type: { kind: "expr", vars: 1 }, required: true, doc: "iterasjonsfunksjonen g i x_{n+1} = g(x_n)" },
+    gLabel: { type: { kind: "string" }, default: "y = g(x)", doc: "kurvelabel for g (KaTeX) i kurvens farge — sett uttrykket, f.eks. \"y = \\\\cos x\" (W9)" },
     x0: { type: { kind: "number" }, required: true, doc: "startverdien x_0" },
     viewX: { type: { kind: "range" }, default: [-0.5, 2], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-0.5, 2], doc: "y-utsnitt" },
@@ -300,7 +320,7 @@ registerTemplate({
   example: {
     template: "fikspunkt-steg",
     title: "Fikspunktiterasjon for cos",
-    params: { g: "cos(x)", x0: 1.4, viewX: [-0.3, 1.7], viewY: [-0.3, 1.7], maks: 14 },
+    params: { g: "cos(x)", gLabel: "y = \\cos x", x0: 1.4, viewX: [-0.3, 1.7], viewY: [-0.3, 1.7], maks: 14 },
   },
   render: (params) => <FikspunktSteg params={params} />,
 });

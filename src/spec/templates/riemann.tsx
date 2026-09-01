@@ -14,12 +14,12 @@
 import { useMemo, useState } from "react";
 import { Polygon } from "mafs";
 import { KPlot } from "../../2d/KPlot";
-import { KCurve, KMathLabel, useRoleColor } from "../../2d/primitives";
-import { KFormula, KMixed } from "../../chrome";
+import { KCurve, useRoleColor } from "../../2d/primitives";
+import { KFormula, KMixed, KFig, KLegend } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
-import { fmt, sample, simpson } from "../../math";
+import { sample, simpson } from "../../math";
 
 type P = Record<string, unknown>;
 
@@ -36,7 +36,7 @@ function RiemannSum({ params }: { params: P }) {
   const object = useRoleColor("object");
 
   const dx = (b - a) / n;
-  const { rects, sn, meanH } = useMemo(() => {
+  const { rects, sn } = useMemo(() => {
     const rects: [number, number][][] = [];
     let sn = 0;
     for (let i = 0; i < n; i++) {
@@ -55,36 +55,37 @@ function RiemannSum({ params }: { params: P }) {
     [f, a, b]
   );
 
-  // anchored positions: S_n inside the measured area, ∫ in the sky above it
-  const snAt = (params.snAt as [number, number]) ?? [(a + b) / 2, meanH * 0.45];
-  const exactAt =
-    (params.exactAt as [number, number]) ??
-    [a + (b - a) * 0.72, view.y[1] - (view.y[1] - view.y[0]) * 0.09];
-
   return (
     <div className="kviz-widget">
       {params.intro ? (
         <p className="kviz-intro"><KMixed text={params.intro as string} /></p>
       ) : null}
 
-      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
-        {showTarget && (
-          <Polygon points={targetPts} color={object} fillOpacity={0.12}
-            strokeOpacity={0} weight={0.1} />
-        )}
-        {rects.map((pts, i) => (
-          <Polygon key={i} points={pts} color={touch}
-            fillOpacity={t.fill.areaOpacity} weight={1.5} />
-        ))}
-        <KCurve f={f} />
-        {readout === "i-figuren" && (
-          <>
-            <KMathLabel tex={`S_n = ${fmt(sn, 3)}`} at={snAt} role="touch" />
-            <KMathLabel tex={`\\int_a^b f(x)\\,dx = ${fmt(exact, 3)}`} at={exactAt}
-              role="object" />
-          </>
-        )}
-      </KPlot>
+      <KFig
+        legend={
+          readout === "ingen" ? undefined : (
+            <KLegend
+              corner="tl"
+              items={[
+                { label: "S_n", value: sn, digits: 3, role: "touch" },
+                { label: "\\int_a^b f(x)\\,dx", value: exact, digits: 3, role: "object" },
+              ]}
+            />
+          )
+        }
+      >
+        <KPlot viewBox={view} height={(params.height as number) ?? 340}>
+          {showTarget && (
+            <Polygon points={targetPts} color={object} fillOpacity={0.12}
+              strokeOpacity={0} weight={0.1} />
+          )}
+          {rects.map((pts, i) => (
+            <Polygon key={i} points={pts} color={touch}
+              fillOpacity={t.fill.areaOpacity} weight={1.5} />
+          ))}
+          <KCurve f={f} />
+        </KPlot>
+      </KFig>
 
       <div className="kviz-widget-controls">
         <KFormula tex="n" />
@@ -92,16 +93,6 @@ function RiemannSum({ params }: { params: P }) {
           min={1} max={params.nMax as number} step={1} value={n}
           aria-label="antall rektangler"
           onChange={(e) => setN(Math.round(+e.target.value))} />
-        {readout === "verdilinje" && (
-          <span className="kviz-widget-values">
-            <span style={{ color: t.accents.touch.ink }}>
-              <KFormula tex={`S_n = ${fmt(sn, 3)}`} />
-            </span>
-            <span style={{ color: t.accents.object.ink }}>
-              <KFormula tex={`\\int = ${fmt(exact, 3)}`} />
-            </span>
-          </span>
-        )}
       </div>
     </div>
   );
@@ -117,12 +108,12 @@ registerTemplate({
     intro: { type: { kind: "string" }, default: "", doc: "introtekst over figuren; $...$ blir KaTeX" },
     range: { type: { kind: "range" }, default: [0, 2], doc: "integrasjonsintervallet [a, b]" },
     method: { type: { kind: "string", oneOf: ["hoyre", "venstre"] }, default: "hoyre", doc: "endepunkt for f(x_i)" },
-    readout: { type: { kind: "string", oneOf: ["i-figuren", "verdilinje", "ingen"] }, default: "i-figuren", doc: "hvor verdiene står" },
+    readout: { type: { kind: "string", oneOf: ["i-figuren", "verdilinje", "ingen"] }, default: "i-figuren", doc: "W7: alt annet enn \"ingen\" viser S_n og integralverdien i legenden i figuren (\"verdilinje\" er utgått og behandles likt)" },
     showTarget: { type: { kind: "boolean" }, default: true, doc: "vis det eksakte arealet som svak blå flate bak rektanglene" },
     n0: { type: { kind: "number", min: 1, max: 200 }, default: 6, doc: "start-n" },
     nMax: { type: { kind: "number", min: 4, max: 200 }, default: 100, doc: "maks n på glideren" },
-    snAt: { type: { kind: "numbers" }, default: undefined, doc: "valgfri plassering [x, y] for S_n" },
-    exactAt: { type: { kind: "numbers" }, default: undefined, doc: "valgfri plassering [x, y] for integralverdien" },
+    snAt: { type: { kind: "numbers" }, default: undefined, doc: "utgått — ignoreres (W7: verdiene står i legenden); beholdt for bakoverkompatibilitet" },
+    exactAt: { type: { kind: "numbers" }, default: undefined, doc: "utgått — ignoreres (W7); beholdt for bakoverkompatibilitet" },
     viewX: { type: { kind: "range" }, default: [-0.4, 2.4], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-0.5, 4.5], doc: "y-utsnitt" },
     height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },

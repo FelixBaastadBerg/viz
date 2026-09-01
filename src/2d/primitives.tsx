@@ -149,6 +149,32 @@ export function KLabel({ tex, at, role, katexOptions }: KLabelProps) {
   return <LaTeX tex={tex} at={at} color={color} katexOptions={katexOptions} />;
 }
 
+/**
+ * W9: pick a quiet spot for a curve label («y = f(x)» in the curve's colour):
+ * a point loosely along the curve, offset by `dy` view-heights, kept inside
+ * the view. Scans a few x-fractions and returns the first that fits.
+ */
+export function curveLabelPos(
+  f: (x: number) => number,
+  view: { x: [number, number]; y: [number, number] },
+  frac = 0.78,
+  dy = 0.09
+): [number, number] {
+  const [xa, xb] = view.x;
+  const [ya, yb] = view.y;
+  const h = yb - ya;
+  const margin = 0.07 * h;
+  const cands = [frac, 0.64, 0.5, 0.34, 0.2, 0.88];
+  for (const c of cands) {
+    const x = xa + (xb - xa) * c;
+    const y = f(x) + dy * h;
+    if (Number.isFinite(y) && y > ya + margin && y < yb - margin) return [x, y];
+  }
+  const x = xa + (xb - xa) * frac;
+  const y = f(x);
+  return [x, Math.min(Math.max(Number.isFinite(y) ? y : (ya + yb) / 2, ya + margin), yb - margin)];
+}
+
 export interface KMathLabelProps extends KLabelProps {
   /** Sit the label on a borderless stage-coloured plate so it never collides
    * with the graphics behind it (Felix, 2026-08-30). */

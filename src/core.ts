@@ -23,7 +23,7 @@ export * from "./math";
 export { KPlot, type KPlotProps } from "./2d/KPlot";
 export {
   KCurve, KTangent, KVector, KArea, KLabel, KMathLabel, KPoint,
-  useRoleColor,
+  useRoleColor, curveLabelPos,
   type KCurveProps, type KTangentProps, type KVectorProps,
   type KAreaProps, type KLabelProps, type KMathLabelProps,
   type KPointProps, type KDraggable,
@@ -31,8 +31,9 @@ export {
 
 // chrome
 export {
-  KFormula, KMixed, KPanel, KReadout, KCaption, KSlider, useTexColor,
+  KFormula, KMixed, KPanel, KReadout, KCaption, KSlider, KLegend, KFig, useTexColor,
   type KPanelProps, type KReadoutItem, type KSliderProps,
+  type KLegendProps, type KLegendItem, type KLegendCorner,
 } from "./chrome";
 
 // quiz

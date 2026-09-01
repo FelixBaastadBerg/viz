@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Polygon, Line as MafsLine, Circle } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KPoint, KVector, KLabel, useRoleColor } from "../../2d/primitives";
-import { KPanel, KReadout, KSlider } from "../../chrome";
+import { KPanel, KFig, KLegend, KSlider } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import type { QuizWrapper } from "../types";
@@ -25,6 +25,20 @@ function Enhetssirkel({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
   const alt2Color = useRoleColor("alt2");
   return (
     <>
+      <KFig
+        legend={
+          quiz ? undefined : (
+            <KLegend
+              corner="tl"
+              items={[
+                { label: "v", value: `${fmt(deg, 0)}°`, role: "touch" },
+                { label: "\\cos v", value: cx, role: "alt" },
+                { label: "\\sin v", value: sy, role: "alt2" },
+              ]}
+            />
+          )
+        }
+      >
       <KPlot
         viewBox={{ x: [-1.6, 1.6], y: [-1.6, 1.6] }}
         aspect="equal"
@@ -50,19 +64,8 @@ function Enhetssirkel({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
         <KLabel tex="\cos v" at={[cx / 2, -0.22]} role="alt" />
         <KLabel tex="\sin v" at={[cx + (cx >= 0 ? 0.34 : -0.34), sy / 2]} role="alt2" />
       </KPlot>
-      {quiz ? (
-        <SpecQuiz quiz={quiz} value={deg} touched={touched} />
-      ) : (
-        <KPanel position="readout">
-          <KReadout
-            items={[
-              { label: "v", value: `${fmt(deg, 0)}°`, role: "touch" },
-              { label: "\\cos v", value: cx, role: "alt" },
-              { label: "\\sin v", value: sy, role: "alt2" },
-            ]}
-          />
-        </KPanel>
-      )}
+      </KFig>
+      {quiz ? <SpecQuiz quiz={quiz} value={deg} touched={touched} /> : null}
     </>
   );
 }
@@ -113,6 +116,18 @@ function Vektorer({ params }: { params: P }) {
     kompleks ? fmtComplex(p) : `(${fmt(p[0], 1)}, ${fmt(p[1], 1)})`;
   return (
     <>
+      <KFig
+        legend={
+          <KLegend
+            corner="tl"
+            items={[
+              { label: uTex, value: show(u), role: "object" },
+              { label: vTex, value: show(v), role: "alt" },
+              { label: sumTex, value: show(sum), role: "touch" },
+            ]}
+          />
+        }
+      >
       <KPlot
         viewBox={{ x: [-4.5, 4.5], y: [-4, 4] }}
         aspect="equal"
@@ -133,15 +148,7 @@ function Vektorer({ params }: { params: P }) {
         <KLabel tex={vTex} at={[v[0] + 0.3, v[1] + 0.3]} role="alt" />
         <KLabel tex={sumTex} at={[sum[0] + 0.45, sum[1] + 0.35]} role="touch" />
       </KPlot>
-      <KPanel position="readout">
-        <KReadout
-          items={[
-            { label: uTex, value: show(u), role: "object" },
-            { label: vTex, value: show(v), role: "alt" },
-            { label: sumTex, value: show(sum), role: "touch" },
-          ]}
-        />
-      </KPanel>
+      </KFig>
     </>
   );
 }
@@ -245,6 +252,14 @@ function LinTrans({ params }: { params: P }) {
   const image: [number, number][] = [[0, 0], e1, [e1[0] + e2[0], e1[1] + e2[1]], e2];
   return (
     <>
+      <KFig
+        legend={
+          <KLegend
+            corner="tl"
+            items={[{ label: "\\det A", value: det2(At), digits: 2, role: "object" }]}
+          />
+        }
+      >
       <KPlot
         viewBox={{ x: [-4, 4], y: [-3, 3] }}
         subdivisions
@@ -261,9 +276,7 @@ function LinTrans({ params }: { params: P }) {
         <KVector tip={e1} role="touch" />
         <KVector tip={e2} role="alt" />
       </KPlot>
-      <KPanel position="readout">
-        <KReadout items={[{ label: "\\det", value: det2(At), digits: 2, role: "object" }]} />
-      </KPanel>
+      </KFig>
       <KPanel position="controls">
         <KSlider label="t" min={0} max={1} step={0.01} value={s} onChange={setS} />
       </KPanel>

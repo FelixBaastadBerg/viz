@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Polygon, Point as MafsPoint } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KArea, KLabel, useRoleColor } from "../../2d/primitives";
-import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
+import { KPanel, KFig, KLegend, KSlider, type KLegendItem } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
@@ -32,36 +32,31 @@ function FoelgeRekke({ params }: { params: P }) {
   const yMax = Math.max(...values, 0) * 1.25 + 0.5;
   const yMin = Math.min(...values, 0) * 1.25 - 0.5;
 
+  const legendItems: KLegendItem[] = [
+    { label: "a_n", value: terms[n - 1], digits: 3, role: "object" },
+    ...(kind === "partial-sums"
+      ? [{ label: "S_n", value: partials[n - 1], digits: 3, role: "touch" as const }]
+      : []),
+  ];
   return (
     <>
-      <KPlot viewBox={{ x: [0, nMax + 1], y: [yMin, yMax] }} height={(params.height as number) ?? 340}>
-        {values.map((v, i) => (
-          <MafsPoint
-            key={i}
-            x={i + 1}
-            y={v}
-            color={i + 1 <= n ? touchColor : objectColor}
-            opacity={i + 1 <= n ? 1 : 0.35}
-          />
-        ))}
-        {kind === "partial-sums" && (
-          <KLabel tex={`S_{${n}} = ${fmt(partials[n - 1], 3)}`} at={[nMax * 0.55, yMax * 0.85]} role="touch" />
-        )}
-      </KPlot>
-      <KPanel position="readout">
-        <p className="kviz-formula">
-          <KFormula tex={(params.tex as string) || "a_n"} />
-        </p>
-        <KReadout
-          items={[
-            { label: "n", value: String(n), role: "touch" },
-            { label: "a_n", value: terms[n - 1], digits: 3, role: "object" },
-            ...(kind === "partial-sums"
-              ? [{ label: "S_n", value: partials[n - 1], digits: 3, role: "touch" as const }]
-              : []),
-          ]}
-        />
-      </KPanel>
+      <KFig
+        legend={
+          <KLegend corner={kind === "partial-sums" ? "tl" : "tr"} items={legendItems} />
+        }
+      >
+        <KPlot viewBox={{ x: [0, nMax + 1], y: [yMin, yMax] }} height={(params.height as number) ?? 340}>
+          {values.map((v, i) => (
+            <MafsPoint
+              key={i}
+              x={i + 1}
+              y={v}
+              color={i + 1 <= n ? touchColor : objectColor}
+              opacity={i + 1 <= n ? 1 : 0.35}
+            />
+          ))}
+        </KPlot>
+      </KFig>
       <KPanel position="controls">
         <KSlider label="n" min={1} max={nMax} step={1} value={n} onChange={(v) => setN(Math.round(v))} digits={0} />
       </KPanel>
@@ -76,7 +71,7 @@ registerTemplate({
   curriculum: ["R2", "S2"],
   params: {
     an: { type: { kind: "expr", vars: 1 }, required: true, doc: "leddet a_n som uttrykk i x (x = n), f.eks. \"3*(1/2)^(x-1)\"" },
-    tex: { type: { kind: "string" }, default: "", doc: "KaTeX-visning, f.eks. \"a_n = 3\\\\cdot(1/2)^{n-1}\"" },
+    tex: { type: { kind: "string" }, default: "", doc: "utgått — ignoreres (W9: formler hører i brødteksten); beholdt for bakoverkompatibilitet" },
     kind: { type: { kind: "string", oneOf: ["sequence", "partial-sums"] }, default: "sequence", doc: "vis leddene eller delsummene S_n" },
     nMax: { type: { kind: "number", min: 3, max: 60 }, default: 20, doc: "antall ledd" },
     height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
@@ -115,6 +110,14 @@ function BinomiskFordeling({ params }: { params: P }) {
   const w = 0.38;
   return (
     <>
+      <KFig
+        legend={
+          <KLegend
+            corner="tl"
+            items={[{ label: `X \\sim \\text{Bin}(${n},\\; ${fmt(p, 2)})`, role: "object" }]}
+          />
+        }
+      >
       <KPlot viewBox={{ x: [-1, Math.max(n + 1, 8)], y: [-yMax * 0.08, yMax] }} height={(params.height as number) ?? 340}>
         {pmf.map((q, k) => (
           <Polygon
@@ -127,11 +130,7 @@ function BinomiskFordeling({ params }: { params: P }) {
         ))}
         <KLabel tex={`E(X) = np = ${fmt(mean, 1)}`} at={[Math.max(n + 1, 8) * 0.72, yMax * 0.9]} role="touch" />
       </KPlot>
-      <KPanel position="readout">
-        <p className="kviz-formula">
-          <KFormula tex={`X \\sim \\text{Bin}(${n},\\; ${fmt(p, 2)})`} />
-        </p>
-      </KPanel>
+      </KFig>
       <KPanel position="controls">
         <KSlider label="n" min={1} max={40} step={1} value={n} onChange={(v) => setN(Math.round(v))} digits={0} />
         <KSlider label="p" min={0.05} max={0.95} step={0.01} value={p} onChange={setP} />
@@ -169,16 +168,22 @@ function NormalFordeling({ params }: { params: P }) {
   const prob = simpson(phi, a, b, 128);
   return (
     <>
-      <KPlot viewBox={{ x: [mu - 5 * 1.6, mu + 5 * 1.6], y: [-0.06, 0.75] }} height={(params.height as number) ?? 340}>
-        <KCurve f={phi} />
-        <KArea f={phi} from={a} to={b} role="touch" />
-        <KLabel tex={`P(${fmt(a, 1)} \\le X \\le ${fmt(b, 1)}) = ${fmt(prob, 3)}`} at={[mu, 0.68]} role="touch" />
-      </KPlot>
-      <KPanel position="readout">
-        <p className="kviz-formula">
-          <KFormula tex={`X \\sim N(${fmt(mu, 1)},\\; ${fmt(sigma, 1)}^2)`} />
-        </p>
-      </KPanel>
+      <KFig
+        legend={
+          <KLegend
+            corner="tl"
+            items={[
+              { label: `X \\sim N(${fmt(mu, 1)},\\; ${fmt(sigma, 1)}^2)`, role: "object" },
+              { label: `P(${fmt(a, 1)} \\le X \\le ${fmt(b, 1)})`, value: prob, digits: 3, role: "touch" },
+            ]}
+          />
+        }
+      >
+        <KPlot viewBox={{ x: [mu - 5 * 1.6, mu + 5 * 1.6], y: [-0.06, 0.75] }} height={(params.height as number) ?? 340}>
+          <KCurve f={phi} />
+          <KArea f={phi} from={a} to={b} role="touch" />
+        </KPlot>
+      </KFig>
       <KPanel position="controls">
         <KSlider label="\mu" min={-3} max={3} step={0.1} value={mu} onChange={setMu} digits={1} />
         <KSlider label="\sigma" min={0.4} max={2.5} step={0.05} value={sigma} onChange={setSigma} />

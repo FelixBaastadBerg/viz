@@ -1,8 +1,8 @@
 /** Templates: function analysis (1T/R1 core). */
 import { useState } from "react";
 import { KPlot } from "../../2d/KPlot";
-import { KCurve, KTangent, KPoint, KArea, KLabel } from "../../2d/primitives";
-import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
+import { KCurve, KTangent, KPoint, KArea, KLabel, curveLabelPos } from "../../2d/primitives";
+import { KPanel, KFig, KLegend, KSlider } from "../../chrome";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
 import type { QuizWrapper } from "../types";
@@ -19,36 +19,36 @@ function FunksjonTangent({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
   const view = { x: params.viewX as [number, number], y: params.viewY as [number, number] };
   return (
     <>
-      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
-        <KCurve f={f} drawIn delay={150} />
-        <KTangent f={f} x={x0} fadeIn delay={900} />
-        <KPoint
-          point={[x0, f(x0)]}
-          constrain={(x) => [x, f(x)]}
-          onMove={([x]) => {
-            setX0(x);
-            setTouched(true);
-          }}
-          fadeIn
-          delay={900}
-        />
-      </KPlot>
-      {quiz ? (
-        <SpecQuiz quiz={quiz} value={x0} fValue={f(x0)} touched={touched} />
-      ) : (
-        <KPanel position="readout" fadeInDelay={1100}>
-          <p className="kviz-formula">
-            <KFormula tex={(params.tex as string) || `f(x)`} />
-          </p>
-          <KReadout
-            items={[
-              { label: "x", value: x0, role: "touch" },
-              { label: "f(x)", value: f(x0), role: "touch" },
-              { label: "f'(x)", value: ddx(f, x0), role: "touch" },
-            ]}
+      <KFig
+        legend={
+          quiz ? undefined : (
+            <KLegend
+              corner="tl"
+              items={[
+                { label: "x", value: x0, role: "touch" },
+                { label: "f(x)", value: f(x0), role: "object" },
+                { label: "f'(x)", value: ddx(f, x0), role: "touch" },
+              ]}
+            />
+          )
+        }
+      >
+        <KPlot viewBox={view} height={(params.height as number) ?? 340}>
+          <KCurve f={f} drawIn delay={150} />
+          <KTangent f={f} x={x0} fadeIn delay={900} />
+          <KPoint
+            point={[x0, f(x0)]}
+            constrain={(x) => [x, f(x)]}
+            onMove={([x]) => {
+              setX0(x);
+              setTouched(true);
+            }}
+            fadeIn
+            delay={900}
           />
-        </KPanel>
-      )}
+        </KPlot>
+      </KFig>
+      {quiz ? <SpecQuiz quiz={quiz} value={x0} fValue={f(x0)} touched={touched} /> : null}
     </>
   );
 }
@@ -60,7 +60,7 @@ registerTemplate({
   curriculum: ["1T", "R1"],
   params: {
     f: { type: { kind: "expr", vars: 1 }, required: true, doc: "funksjonen, f.eks. \"0.1x^3 - x + 1\"" },
-    tex: { type: { kind: "string" }, default: "", doc: "KaTeX-visning av f, f.eks. \"f(x)=0{,}1x^3-x+1\"" },
+    tex: { type: { kind: "string" }, default: "", doc: "utgått — ignoreres (W9: formler hører i brødteksten); beholdt for bakoverkompatibilitet" },
     viewX: { type: { kind: "range" }, default: [-6, 6], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-4, 4], doc: "y-utsnitt" },
     x0: { type: { kind: "number" }, default: 1, doc: "startposisjon for punktet" },
@@ -82,31 +82,35 @@ function DerivertGraf({ params }: { params: P }) {
   const [x0, setX0] = useState(params.x0 as number);
   const view = { x: params.viewX as [number, number], y: params.viewY as [number, number] };
   const halfHeight = ((params.height as number) ?? 480) / 2;
+  const fLabel = (params.fLabel as string) || "y = f(x)";
+  const dfLabel = (params.dfLabel as string) || "y = f'(x)";
   return (
-    <>
-      <div style={{ display: "grid", gridTemplateRows: "1fr 1fr" }}>
-        <KPlot viewBox={view} height={halfHeight}>
-          <KCurve f={f} />
-          <KTangent f={f} x={x0} />
-          <KPoint point={[x0, f(x0)]} constrain={(x) => [x, f(x)]} onMove={([x]) => setX0(x)} />
-          <KLabel tex="f" at={[view.x[1] - 0.7, f(view.x[1] - 0.9) + 0.6]} role="object" />
-        </KPlot>
-        <KPlot viewBox={view} height={halfHeight}>
-          <KCurve f={df} role="alt" />
-          <KPoint point={[x0, df(x0)]} constrain={(x) => [x, df(x)]} onMove={([x]) => setX0(x)} />
-          <KLabel tex="f'" at={[view.x[1] - 0.7, df(view.x[1] - 0.9) + 0.6]} role="alt" />
-        </KPlot>
-      </div>
-      <KPanel position="readout">
-        <KReadout
+    <KFig
+      legend={
+        <KLegend
+          corner="tl"
           items={[
             { label: "x", value: x0, role: "touch" },
             { label: "f(x)", value: f(x0), role: "object" },
             { label: "f'(x)", value: df(x0), role: "alt" },
           ]}
         />
-      </KPanel>
-    </>
+      }
+    >
+      <div style={{ display: "grid", gridTemplateRows: "1fr 1fr" }}>
+        <KPlot viewBox={view} height={halfHeight}>
+          <KCurve f={f} />
+          <KTangent f={f} x={x0} />
+          <KPoint point={[x0, f(x0)]} constrain={(x) => [x, f(x)]} onMove={([x]) => setX0(x)} />
+          <KLabel tex={fLabel} at={curveLabelPos(f, view)} role="object" />
+        </KPlot>
+        <KPlot viewBox={view} height={halfHeight}>
+          <KCurve f={df} role="alt" />
+          <KPoint point={[x0, df(x0)]} constrain={(x) => [x, df(x)]} onMove={([x]) => setX0(x)} />
+          <KLabel tex={dfLabel} at={curveLabelPos(df, view)} role="alt" />
+        </KPlot>
+      </div>
+    </KFig>
   );
 }
 
@@ -117,6 +121,8 @@ registerTemplate({
   curriculum: ["R1"],
   params: {
     f: { type: { kind: "expr", vars: 1 }, required: true, doc: "funksjonen" },
+    fLabel: { type: { kind: "string" }, default: "y = f(x)", doc: "kurvelabel for f (KaTeX) — sett gjerne uttrykket, f.eks. \"y = \\\\tfrac{x^3}{3} - x\" (W9)" },
+    dfLabel: { type: { kind: "string" }, default: "y = f'(x)", doc: "kurvelabel for f' (KaTeX)" },
     viewX: { type: { kind: "range" }, default: [-5, 5], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-4, 4], doc: "y-utsnitt (begge grafer)" },
     x0: { type: { kind: "number" }, default: 1, doc: "startposisjon" },
@@ -139,22 +145,31 @@ function ArealUnderKurve({ params }: { params: P }) {
   const V = simpson(f, a, b);
   return (
     <>
-      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
-        <KCurve f={f} />
-        <KArea f={f} from={a} to={b} />
-        <KLabel tex={`\\int_{${fmt(a, 1)}}^{${fmt(b, 1)}} f(x)\\,dx = ${fmt(V, 3)}`}
-          at={[(view.x[0] + view.x[1]) / 2, view.y[0] + 0.8]} role="object" />
-      </KPlot>
+      <KFig
+        legend={
+          <KLegend
+            corner="bl"
+            items={[
+              {
+                label: `\\int_{${fmt(a, 1)}}^{${fmt(b, 1)}} f(x)\\,dx`,
+                value: V,
+                digits: 3,
+                role: "object",
+              },
+            ]}
+          />
+        }
+      >
+        <KPlot viewBox={view} height={(params.height as number) ?? 340}>
+          <KCurve f={f} />
+          <KArea f={f} from={a} to={b} />
+        </KPlot>
+      </KFig>
       <KPanel position="controls">
         <KSlider label="a" min={view.x[0]} max={view.x[1]} step={0.05} value={a}
           onChange={(v) => { setA(v); if (v > b) setB(v); }} />
         <KSlider label="b" min={view.x[0]} max={view.x[1]} step={0.05} value={b}
           onChange={(v) => { setB(v); if (v < a) setA(v); }} />
-      </KPanel>
-      <KPanel position="readout">
-        <p className="kviz-formula">
-          <KFormula tex={(params.tex as string) || "\\int_a^b f(x)\\,dx"} />
-        </p>
       </KPanel>
     </>
   );
@@ -167,7 +182,7 @@ registerTemplate({
   curriculum: ["R2"],
   params: {
     f: { type: { kind: "expr", vars: 1 }, required: true, doc: "integranden" },
-    tex: { type: { kind: "string" }, default: "", doc: "KaTeX-visning" },
+    tex: { type: { kind: "string" }, default: "", doc: "utgått — ignoreres (W9: formler hører i brødteksten); beholdt for bakoverkompatibilitet" },
     from: { type: { kind: "number" }, default: -1, doc: "nedre grense (start)" },
     to: { type: { kind: "number" }, default: 2, doc: "øvre grense (start)" },
     viewX: { type: { kind: "range" }, default: [-4, 4], doc: "x-utsnitt" },
@@ -191,15 +206,25 @@ function TrigFunksjon({ params }: { params: P }) {
   const f = (x: number) => A * Math.sin(B * (x + C)) + D;
   return (
     <>
-      <KPlot viewBox={{ x: [-7, 7], y: [-4, 4] }} height={(params.height as number) ?? 340}>
-        <KCurve f={(x) => Math.sin(x)} role="alt" weight="secondary" />
-        <KCurve f={f} />
-      </KPlot>
-      <KPanel position="readout">
-        <p className="kviz-formula">
-          <KFormula tex={`f(x) = ${fmt(A, 1)}\\sin(${fmt(B, 1)}(x + ${fmt(C, 1)})) + ${fmt(D, 1)}`} />
-        </p>
-      </KPanel>
+      <KFig
+        legend={
+          <KLegend
+            corner="tl"
+            items={[
+              {
+                label: `y = ${fmt(A, 1)}\\sin(${fmt(B, 1)}(x + ${fmt(C, 1)})) + ${fmt(D, 1)}`,
+                role: "object",
+              },
+              { label: "y = \\sin x", role: "alt" },
+            ]}
+          />
+        }
+      >
+        <KPlot viewBox={{ x: [-7, 7], y: [-4, 4] }} height={(params.height as number) ?? 340}>
+          <KCurve f={(x) => Math.sin(x)} role="alt" weight="secondary" />
+          <KCurve f={f} />
+        </KPlot>
+      </KFig>
       <KPanel position="controls">
         <KSlider label="A" min={-3} max={3} step={0.1} value={A} onChange={setA} digits={1} />
         <KSlider label="B" min={0.2} max={4} step={0.1} value={B} onChange={setB} digits={1} />

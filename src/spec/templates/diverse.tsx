@@ -2,9 +2,9 @@
 import { useState } from "react";
 import { useTransformContext, vec } from "mafs";
 import { KPlot } from "../../2d/KPlot";
-import { KCurve, KPoint, KLabel, KVector } from "../../2d/primitives";
+import { KCurve, KPoint, KLabel, KVector, curveLabelPos } from "../../2d/primitives";
 import type { KtRole } from "../../theme/types";
-import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
+import { KPanel, KFormula, KFig, KLegend, KSlider } from "../../chrome";
 import { KScene3D } from "../../3d/KScene3D";
 import { KAxes3D } from "../../3d/KAxes3D";
 import { KSurface } from "../../3d/KSurface";
@@ -135,57 +135,55 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
   const tip: [number, number] = cross
     ? [cross[0] + sx * 0.03 * dx, cross[1] + sy * 0.045 * dy]
     : [0, 0];
+  const legendItems =
+    quiz || statisk
+      ? undefined
+      : (params.readout as string) === "verdier"
+        ? [
+            { label: "x", value: x0, role: "touch" as KtRole },
+            { label: "f(x)", value: f(x0), role: "object" as KtRole },
+            { label: "g(x)", value: g(x0), role: "alt" as KtRole },
+          ]
+        : [
+            { label: "x", value: x0, role: "touch" as KtRole },
+            {
+              label: "f(x) - g(x)",
+              value: gap,
+              role: (gap * gap < 0.01 ? "right" : "touch") as KtRole,
+            },
+          ];
   return (
     <>
-      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
-        <KCurve f={f} />
-        <KCurve f={g} role="alt" weight="secondary" />
-        {!statisk && (
-          <KPoint
-            point={[x0, f(x0)]}
-            constrain={(x) => [x, f(x)]}
-            onMove={([x]) => {
-              setX0(x);
-              setTouched(true);
-            }}
-          />
-        )}
-        <KLabel tex="f" at={[view.x[1] - 0.5, f(view.x[1] - 0.7) + 0.5]} role="object" />
-        <KLabel tex="g" at={[view.x[1] - 0.5, g(view.x[1] - 0.7) + 0.5]} role="alt" />
-        {cross && (
-          <>
-            <DotMarker at={cross} role="alt2" />
-            <HandNote
-              tip={tip}
-              tail={tail}
-              text={(params.merkelapp as string) || "her passer begge ligningene"}
-              anchor={sx === 1 ? "start" : "end"}
-            />
-          </>
-        )}
-      </KPlot>
-      {quiz ? (
-        <SpecQuiz quiz={quiz} value={x0} fValue={f(x0)} touched={touched} />
-      ) : statisk ? null : (
-        <KPanel position="readout">
-          {(params.readout as string) === "verdier" ? (
-            <KReadout
-              items={[
-                { label: "x", value: x0, role: "touch" },
-                { label: "f(x)", value: f(x0), role: "object" },
-                { label: "g(x)", value: g(x0), role: "alt" },
-              ]}
-            />
-          ) : (
-            <KReadout
-              items={[
-                { label: "x", value: x0, role: "touch" },
-                { label: "f(x) - g(x)", value: gap, role: gap * gap < 0.01 ? "right" : "touch" },
-              ]}
+      <KFig legend={legendItems && <KLegend corner="tl" items={legendItems} />}>
+        <KPlot viewBox={view} height={(params.height as number) ?? 340}>
+          <KCurve f={f} />
+          <KCurve f={g} role="alt" weight="secondary" />
+          {!statisk && (
+            <KPoint
+              point={[x0, f(x0)]}
+              constrain={(x) => [x, f(x)]}
+              onMove={([x]) => {
+                setX0(x);
+                setTouched(true);
+              }}
             />
           )}
-        </KPanel>
-      )}
+          <KLabel tex={(params.fLabel as string) || "y = f(x)"} at={curveLabelPos(f, view)} role="object" />
+          <KLabel tex={(params.gLabel as string) || "y = g(x)"} at={curveLabelPos(g, view, 0.86)} role="alt" />
+          {cross && (
+            <>
+              <DotMarker at={cross} role="alt2" />
+              <HandNote
+                tip={tip}
+                tail={tail}
+                text={(params.merkelapp as string) || "her passer begge ligningene"}
+                anchor={sx === 1 ? "start" : "end"}
+              />
+            </>
+          )}
+        </KPlot>
+      </KFig>
+      {quiz ? <SpecQuiz quiz={quiz} value={x0} fValue={f(x0)} touched={touched} /> : null}
     </>
   );
 }
@@ -198,6 +196,8 @@ registerTemplate({
   params: {
     f: { type: { kind: "expr", vars: 1 }, required: true, doc: "venstresiden f" },
     g: { type: { kind: "expr", vars: 1 }, required: true, doc: "høyresiden g" },
+    fLabel: { type: { kind: "string" }, default: "y = f(x)", doc: "kurvelabel for f (KaTeX) i kurvens farge — sett uttrykket, f.eks. \"y = x^2 - 1\" (W9)" },
+    gLabel: { type: { kind: "string" }, default: "y = g(x)", doc: "kurvelabel for g (KaTeX) — sett uttrykket, f.eks. \"y = 0{,}5x + 1\" (W9)" },
     tex: { type: { kind: "string" }, default: "", doc: "utgått — ignoreres (likningen hører hjemme i brødteksten); beholdt for bakoverkompatibilitet" },
     statisk: { type: { kind: "boolean" }, default: false, doc: "statisk figur: intet dragbart punkt/readouts — skjæringspunktet beregnes og markeres med pil og merkelapp" },
     merkelapp: { type: { kind: "string" }, default: "(x, y)-verdiene som passer begge", doc: "kort tekst ved pilen i statisk modus" },
@@ -212,7 +212,7 @@ registerTemplate({
   example: {
     template: "likning-grafisk",
     title: "Grafisk løsning av likning",
-    params: { f: "x^2 - 1", g: "0.5x + 1", tex: "x^2 - 1 = 0{,}5x + 1", viewX: [-4, 4], viewY: [-2, 6], x0: 0 },
+    params: { f: "x^2 - 1", g: "0.5x + 1", fLabel: "y = x^2 - 1", gLabel: "y = 0{,}5x + 1", viewX: [-4, 4], viewY: [-2, 6], x0: 0 },
   },
   render: (params, quiz) => <LikningGrafisk params={params} quiz={quiz} />,
 });
@@ -336,17 +336,14 @@ function GrenseUtforsker({ params }: { params: P }) {
           onMove={([x]) => setX0(x)}
         />
       </KPlot>
-      {/* W6: readouts live BELOW the figure — no overlay panel that can
-          collide with the plot in embedded contexts */}
-      <div className="kviz-widget-controls" style={{ gap: 26 }}>
-        {params.tex ? <KFormula tex={params.tex as string} /> : null}
-        <KReadout
-          items={[
-            { label: "x", value: x0, role: "touch" },
-            { label: "f(x)", value: f(x0), role: "object" },
-          ]}
-        />
-      </div>
+      {/* W7: live values sit in the in-figure legend */}
+      <KLegend
+        corner="tl"
+        items={[
+          { label: "x", value: x0, role: "touch" },
+          { label: "f(x)", value: f(x0), role: "object" },
+        ]}
+      />
     </div>
   );
 }
@@ -361,7 +358,7 @@ registerTemplate({
     a: { type: { kind: "number" }, required: true, doc: "grensepunktet" },
     L: { type: { kind: "number" }, required: true, doc: "grenseverdien (hullets y-verdi)" },
     hole: { type: { kind: "boolean" }, default: true, doc: "tegn åpent hull i (a, L)" },
-    tex: { type: { kind: "string" }, default: "", doc: "KaTeX over avlesningene" },
+    tex: { type: { kind: "string" }, default: "", doc: "utgått — ignoreres (W9: formler hører i brødteksten); beholdt for bakoverkompatibilitet" },
     height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger" },
     viewX: { type: { kind: "range" }, default: [-1, 5], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-1, 9], doc: "y-utsnitt" },
@@ -386,7 +383,6 @@ registerTemplate({
       f: "x < 2 ? x^2 : 2x",
       a: 2,
       L: 4,
-      tex: "\\lim_{x \\to 2} f(x) = 4",
       viewX: [-1, 5],
       viewY: [-1, 9],
       x0: 0.8,
