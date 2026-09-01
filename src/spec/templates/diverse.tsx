@@ -48,13 +48,26 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
           <p className="kviz-formula">
             <KFormula tex={(params.tex as string) || "f(x) = g(x)"} />
           </p>
-          <KReadout
-            items={[
-              { label: "x", value: x0, role: "touch" },
-              { label: "f(x) - g(x)", value: gap, role: gap * gap < 0.01 ? "right" : "touch" },
-            ]}
-          />
-          <KCaption>Dra {t.touchNameNb} dit hvor grafene skjærer hverandre.</KCaption>
+          {(params.readout as string) === "verdier" ? (
+            <KReadout
+              items={[
+                { label: "x", value: x0, role: "touch" },
+                { label: "f(x)", value: f(x0), role: "object" },
+                { label: "g(x)", value: g(x0), role: "alt" },
+              ]}
+            />
+          ) : (
+            <KReadout
+              items={[
+                { label: "x", value: x0, role: "touch" },
+                { label: "f(x) - g(x)", value: gap, role: gap * gap < 0.01 ? "right" : "touch" },
+              ]}
+            />
+          )}
+          <KCaption>
+            {(params.caption as string) ||
+              `Dra ${t.touchNameNb} dit hvor grafene skjærer hverandre.`}
+          </KCaption>
         </KPanel>
       )}
     </>
@@ -73,6 +86,8 @@ registerTemplate({
     viewX: { type: { kind: "range" }, default: [-5, 5], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-4, 6], doc: "y-utsnitt" },
     x0: { type: { kind: "number" }, default: 0, doc: "startposisjon" },
+    readout: { type: { kind: "string", oneOf: ["differanse", "verdier"] }, default: "differanse", doc: "vis f−g (likninger) eller f og g hver for seg (grenser)" },
+    caption: { type: { kind: "string" }, default: "", doc: "egen instruksjonstekst under avlesningene" },
   },
   quizValue: "x-posisjonen til punktet (bruk expr-zero med f−g for skjæring)",
   example: {
