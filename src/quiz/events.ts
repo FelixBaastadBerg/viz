@@ -23,5 +23,5 @@ export function onQuizEvent(fn: QuizEventListener): () => void {
 }
 
 export function emitQuizEvent(e: QuizEvent): void {
-  for (const fn of listeners) fn(e);
+  listeners.forEach((fn) => fn(e));
 }

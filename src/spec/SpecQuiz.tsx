@@ -14,8 +14,8 @@ export function goalMet(quiz: QuizWrapper, v: number): boolean {
 
 function interpolate(s: string, v: number, fv?: number): string {
   return s
-    .replaceAll("{v}", fmt(v))
-    .replaceAll("{fv}", fv === undefined ? "" : fmt(fv));
+    .replace(/\{v\}/g, fmt(v))
+    .replace(/\{fv\}/g, fv === undefined ? "" : fmt(fv));
 }
 
 /**

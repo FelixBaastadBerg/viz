@@ -10,7 +10,7 @@ export function getTemplate(id: string): TemplateDef | undefined {
   return registry.get(id);
 }
 export function allTemplates(): TemplateDef[] {
-  return [...registry.values()];
+  return Array.from(registry.values());
 }
 
 export interface ValidationResult {
@@ -77,7 +77,7 @@ export function validateSpec(spec: WidgetSpec): ValidationResult {
     return {
       ok: false,
       errors: [
-        `unknown template "${spec.template}". Available: ${[...registry.keys()].join(", ")}`,
+        `unknown template "${spec.template}". Available: ${Array.from(registry.keys()).join(", ")}`,
       ],
       params: {},
     };
