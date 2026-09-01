@@ -198,20 +198,17 @@ function GrenseUtforsker({ params }: { params: P }) {
           onMove={([x]) => setX0(x)}
         />
       </KPlot>
-      <KPanel position="readout">
-        {params.tex ? (
-          <p className="kviz-formula">
-            <KFormula tex={params.tex as string} />
-          </p>
-        ) : null}
+      {/* W6: readouts live BELOW the figure — no overlay panel that can
+          collide with the plot in embedded contexts */}
+      <div className="kviz-widget-controls" style={{ gap: 26 }}>
+        {params.tex ? <KFormula tex={params.tex as string} /> : null}
         <KReadout
           items={[
             { label: "x", value: x0, role: "touch" },
             { label: "f(x)", value: f(x0), role: "object" },
           ]}
         />
-        {params.caption ? <KCaption>{params.caption as string}</KCaption> : null}
-      </KPanel>
+      </div>
     </div>
   );
 }
@@ -227,7 +224,6 @@ registerTemplate({
     L: { type: { kind: "number" }, required: true, doc: "grenseverdien (hullets y-verdi)" },
     hole: { type: { kind: "boolean" }, default: true, doc: "tegn åpent hull i (a, L)" },
     tex: { type: { kind: "string" }, default: "", doc: "KaTeX over avlesningene" },
-    caption: { type: { kind: "string" }, default: "", doc: "instruksjon under avlesningene" },
     height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger" },
     viewX: { type: { kind: "range" }, default: [-1, 5], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-1, 9], doc: "y-utsnitt" },
@@ -241,7 +237,6 @@ registerTemplate({
       a: 2,
       L: 4,
       tex: "\\lim_{x \\to 2} f(x) = 4",
-      caption: "Dra punktet mot x = 2 fra begge sider — f(x) nærmer seg 4, selv om f ikke er definert akkurat der.",
       viewX: [-1, 5],
       viewY: [-1, 9],
       x0: 0.8,
