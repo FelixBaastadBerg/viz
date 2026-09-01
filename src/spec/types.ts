@@ -54,7 +54,9 @@ export type ParamType =
   | { kind: "string"; oneOf?: string[] }
   | { kind: "range"; }               // [min, max] pair
   | { kind: "numbers" }              // number[]
-  | { kind: "matrix2" };             // [[a,b],[c,d]]
+  | { kind: "matrix2" }              // [[a,b],[c,d]]
+  | { kind: "exprs"; vars: 1 | 2 }   // mathjs expression array
+  | { kind: "points" };              // [[x,y], …]
 
 export interface ParamDef {
   type: ParamType;

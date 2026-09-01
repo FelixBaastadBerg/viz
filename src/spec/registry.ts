@@ -66,6 +66,24 @@ function checkParam(name: string, def: ParamDef, value: unknown): string | null 
         value.every((r) => Array.isArray(r) && r.length === 2 && r.every((v) => typeof v === "number"));
       return ok ? null : `param "${name}" must be a 2×2 number matrix [[a,b],[c,d]]`;
     }
+    case "exprs": {
+      if (!Array.isArray(value) || value.some((v) => typeof v !== "string"))
+        return `param "${name}" must be an array of mathjs expression strings`;
+      for (const v of value as string[]) {
+        try {
+          (t.vars === 2 ? fn2 : fn1)(v);
+        } catch (e) {
+          return `param "${name}": ${(e as Error).message}`;
+        }
+      }
+      return null;
+    }
+    case "points": {
+      const ok =
+        Array.isArray(value) &&
+        value.every((p) => Array.isArray(p) && p.length === 2 && p.every((v) => typeof v === "number"));
+      return ok ? null : `param "${name}" must be an array of [x, y] number pairs`;
+    }
   }
 }
 

@@ -181,16 +181,32 @@ function HoleMarker({ at }: { at: [number, number] }) {
   );
 }
 
+/** Small filled marker (e.g. an isolated function value) in pixel space. */
+function DotMarker({ at }: { at: [number, number] }) {
+  const t = useKtTheme();
+  const ctx = useTransformContext();
+  const [px, py] = vec.transform(at, vec.matrixMult(ctx.viewTransform, ctx.userTransform));
+  return <circle cx={px} cy={py} r={5} fill={t.accents.object.stroke} />;
+}
+
 function GrenseUtforsker({ params }: { params: P }) {
   const f = fn1(params.f as string);
   const a = params.a as number;
   const L = params.L as number;
   const view = { x: params.viewX as [number, number], y: params.viewY as [number, number] };
   const [x0, setX0] = useState(params.x0 as number);
+  const extra = ((params.extra as string[]) ?? []).map((e) => fn1(e));
+  const marks = (params.marks as [number, number][]) ?? [];
   return (
     <div className="kviz-widget" style={{ position: "relative" }}>
       <KPlot viewBox={view} height={(params.height as number) ?? 340}>
+        {extra.map((g, i) => (
+          <KCurve key={i} f={g} role="alt" weight="secondary" />
+        ))}
         <KCurve f={f} />
+        {marks.map((m, i) => (
+          <DotMarker key={i} at={m} />
+        ))}
         {params.hole !== false && <HoleMarker at={[a, L]} />}
         <KPoint
           point={[x0, f(x0)]}
@@ -228,6 +244,16 @@ registerTemplate({
     viewX: { type: { kind: "range" }, default: [-1, 5], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-1, 9], doc: "y-utsnitt" },
     x0: { type: { kind: "number" }, default: 0.8, doc: "startposisjon for punktet" },
+    extra: {
+      type: { kind: "exprs", vars: 1 },
+      default: [],
+      doc: "ekstra kurver (mathjs-uttrykk) i dempet stil — f.eks. skviseregelens yttergrenser",
+    },
+    marks: {
+      type: { kind: "points" },
+      default: [],
+      doc: "fylte punkter [[x, y], …] — f.eks. en isolert funksjonsverdi eller intervallender",
+    },
   },
   example: {
     template: "grense-utforsker",
