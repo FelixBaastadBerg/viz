@@ -44,8 +44,10 @@
 /* embedded contexts give the widget no outer height: the generic
    `.kviz-widget .kviz-stage { min-height: 0 }` outranks the plain class,
    so restate the 3D floor at the same specificity */
-.kviz-widget .kviz-stage--3d {
-  min-height: 340px;
+.kviz-widget .kviz-stage.kviz-stage--3d {
+  /* must outrank `.kviz-widget .kviz-stage { min-height: 0 }` below (source
+     order beats it at equal specificity) */
+  min-height: 340px !important;
 }
 
 /* Mafs mapping — Mafs is themed via its own custom properties */
