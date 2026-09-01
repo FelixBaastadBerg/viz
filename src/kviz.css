@@ -41,6 +41,12 @@
 .kviz-stage--3d {
   min-height: 300px;
 }
+/* embedded contexts give the widget no outer height: the generic
+   `.kviz-widget .kviz-stage { min-height: 0 }` outranks the plain class,
+   so restate the 3D floor at the same specificity */
+.kviz-widget .kviz-stage--3d {
+  min-height: 340px;
+}
 
 /* Mafs mapping — Mafs is themed via its own custom properties */
 .kviz-root .MafsView {
@@ -108,11 +114,27 @@
   margin: 0;
   font-variant-numeric: tabular-nums;
   display: flex;
-  gap: 1.4em;
+  gap: 10px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 .kviz-readout .kviz-value {
   color: var(--kt-touch-ink);
+}
+/* instrument chips: each live value in its own pill */
+.kviz-chip {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  background: var(--kt-bg-panel);
+  border: 1px solid var(--kt-border);
+  border-radius: 999px;
+  padding: 3px 12px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+.kviz-chip-eq {
+  color: var(--kt-text-muted);
 }
 
 .kviz-caption {
