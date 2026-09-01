@@ -18,6 +18,69 @@ import { fmt, simpson2d } from "../../math";
 
 type P = Record<string, unknown>;
 
+
+/** Hand-drawn annotation (Manim-video look): curved arrow + Caveat-style
+    label in the theme display font. Drawn in pixel space. */
+function HandNote({
+  tip,
+  tail,
+  text,
+  anchor,
+}: {
+  tip: [number, number];
+  tail: [number, number];
+  text: string;
+  anchor: "start" | "end";
+}) {
+  const t = useKtTheme();
+  const ctx = useTransformContext();
+  const M = vec.matrixMult(ctx.viewTransform, ctx.userTransform);
+  const [x1, y1] = vec.transform(tail, M);
+  const [x2, y2] = vec.transform(tip, M);
+  const col = (t.accents as any).alt2?.stroke ?? t.accents.alt.stroke;
+  const ink = (t.accents as any).alt2?.ink ?? t.accents.alt.ink;
+  // curved shaft: control point pushed perpendicular for a lazy hand arc
+  const mx = (x1 + x2) / 2 - (y2 - y1) * 0.22;
+  const my = (y1 + y2) / 2 + (x2 - x1) * 0.22;
+  // open, hand-drawn arrowhead: two strokes off the approach direction
+  const ang = Math.atan2(y2 - my, x2 - mx);
+  const hl = 11;
+  const a1 = ang + Math.PI - 0.45;
+  const a2 = ang + Math.PI + 0.45;
+  return (
+    <g style={{ pointerEvents: "none" }}>
+      <path
+        d={`M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`}
+        fill="none"
+        stroke={col}
+        strokeWidth={2.4}
+        strokeLinecap="round"
+      />
+      <path
+        d={`M ${x2 + hl * Math.cos(a1)} ${y2 + hl * Math.sin(a1)} L ${x2} ${y2} L ${x2 + hl * Math.cos(a2)} ${y2 + hl * Math.sin(a2)}`}
+        fill="none"
+        stroke={col}
+        strokeWidth={2.4}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <text
+        x={x1 + (anchor === "start" ? 6 : -6)}
+        y={y1 - 8}
+        textAnchor={anchor}
+        fill={ink}
+        style={{
+          fontFamily: t.typography.display,
+          fontSize: 21,
+          fontWeight: t.typography.displayWeight,
+        }}
+      >
+        {text}
+      </text>
+    </g>
+  );
+}
+
 /* -------------------------------------------------------- likning-grafisk */
 /** First sign change of f−g over [x0,x1] whose point lies inside the view,
     refined by bisection. Falls back to the first root when none is in view. */
@@ -91,12 +154,12 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
         <KLabel tex="g" at={[view.x[1] - 0.5, g(view.x[1] - 0.7) + 0.5]} role="alt" />
         {cross && (
           <>
-            <KVector tail={tail} tip={tip} role="alt2" />
             <DotMarker at={cross} role="alt2" />
-            <KLabel
-              tex={`\\text{${(params.merkelapp as string) || "(x, y)-verdiene som passer begge"}}`}
-              at={[tail[0], tail[1] + sy * 0.06 * dy]}
-              role="alt2"
+            <HandNote
+              tip={tip}
+              tail={tail}
+              text={(params.merkelapp as string) || "her passer begge ligningene"}
+              anchor={sx === 1 ? "start" : "end"}
             />
           </>
         )}
