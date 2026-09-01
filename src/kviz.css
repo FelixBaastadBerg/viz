@@ -45,8 +45,10 @@
    `.kviz-widget .kviz-stage { min-height: 0 }` outranks the plain class,
    so restate the 3D floor at the same specificity */
 .kviz-widget .kviz-stage.kviz-stage--3d {
-  /* must outrank `.kviz-widget .kviz-stage { min-height: 0 }` below (source
-     order beats it at equal specificity) */
+  /* explicit height, not min-height: r3f's inner div resolves height:100%
+     against it (percentages ignore min-height), and it must outrank
+     `.kviz-widget .kviz-stage { min-height: 0 }` below */
+  height: 340px !important;
   min-height: 340px !important;
 }
 
