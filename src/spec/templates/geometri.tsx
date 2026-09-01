@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Polygon, Line as MafsLine, Circle } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KPoint, KVector, KLabel, useRoleColor } from "../../2d/primitives";
-import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
+import { KPanel, KReadout, KSlider } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import type { QuizWrapper } from "../types";
@@ -86,17 +86,38 @@ registerTemplate({
 });
 
 /* -------------------------------------------------------------- vektorer */
+/** Format [re, im] as a tidy complex number: «3 + i», «−1 + 2i», «2 − 3i».
+    Coefficient 1 is dropped, pure real/imaginary numbers are simplified. */
+function fmtComplex([re, im]: [number, number], digits = 1): string {
+  const pow = 10 ** digits;
+  const r = Math.round(re * pow) / pow;
+  const m = Math.round(im * pow) / pow;
+  // trim trailing ".0" so integers read clean («3», not «3.0»)
+  const num = (v: number) => fmt(v, digits).replace(/\.0+$/, "");
+  const imPart = (v: number) => (Math.abs(v) === 1 ? "i" : `${num(Math.abs(v))}i`);
+  if (m === 0) return num(r);
+  if (r === 0) return (m < 0 ? "−" : "") + imPart(m);
+  return `${num(r)} ${m < 0 ? "−" : "+"} ${imPart(m)}`;
+}
+
 function Vektorer({ params }: { params: P }) {
   const [u, setU] = useState(params.u as [number, number]);
   const [v, setV] = useState(params.v as [number, number]);
   const op = params.op as string;
+  const kompleks = params.kompleks === true;
   const sum: [number, number] = op === "diff" ? [u[0] - v[0], u[1] - v[1]] : [u[0] + v[0], u[1] + v[1]];
+  // vector names: u/v in the plane, z/w in the complex plane
+  const [uTex, vTex] = kompleks ? ["z", "w"] : ["\\vec{u}", "\\vec{v}"];
+  const sumTex = `${uTex}${op === "diff" ? "-" : "+"}${vTex}`;
+  const show = (p: [number, number]) =>
+    kompleks ? fmtComplex(p) : `(${fmt(p[0], 1)}, ${fmt(p[1], 1)})`;
   return (
     <>
       <KPlot
         viewBox={{ x: [-4.5, 4.5], y: [-4, 4] }}
         aspect="equal"
         height={(params.height as number) ?? 340}
+        axisLabels={kompleks ? { x: "Re", y: "Im" } : undefined}
       >
         <KVector tip={u} role="object" />
         <KVector tip={v} role="alt" />
@@ -108,20 +129,16 @@ function Vektorer({ params }: { params: P }) {
         </g>
         <KPoint point={u} constrain="unrestricted" onMove={(p) => setU(p)} role="object" />
         <KPoint point={v} constrain="unrestricted" onMove={(p) => setV(p)} role="alt" />
-        <KLabel tex="\vec{u}" at={[u[0] + 0.3, u[1] + 0.3]} role="object" />
-        <KLabel tex="\vec{v}" at={[v[0] + 0.3, v[1] + 0.3]} role="alt" />
-        <KLabel tex={op === "diff" ? "\\vec{u}-\\vec{v}" : "\\vec{u}+\\vec{v}"} at={[sum[0] + 0.45, sum[1] + 0.35]} role="touch" />
+        <KLabel tex={uTex} at={[u[0] + 0.3, u[1] + 0.3]} role="object" />
+        <KLabel tex={vTex} at={[v[0] + 0.3, v[1] + 0.3]} role="alt" />
+        <KLabel tex={sumTex} at={[sum[0] + 0.45, sum[1] + 0.35]} role="touch" />
       </KPlot>
       <KPanel position="readout">
         <KReadout
           items={[
-            { label: "\\vec{u}", value: `(${fmt(u[0], 1)}, ${fmt(u[1], 1)})`, role: "object" },
-            { label: "\\vec{v}", value: `(${fmt(v[0], 1)}, ${fmt(v[1], 1)})`, role: "alt" },
-            {
-              label: op === "diff" ? "\\vec{u}-\\vec{v}" : "\\vec{u}+\\vec{v}",
-              value: `(${fmt(sum[0], 1)}, ${fmt(sum[1], 1)})`,
-              role: "touch",
-            },
+            { label: uTex, value: show(u), role: "object" },
+            { label: vTex, value: show(v), role: "alt" },
+            { label: sumTex, value: show(sum), role: "touch" },
           ]}
         />
       </KPanel>
@@ -138,6 +155,7 @@ registerTemplate({
     u: { type: { kind: "numbers" }, default: [2, 1], doc: "vektor u som [x, y]" },
     v: { type: { kind: "numbers" }, default: [1, 2], doc: "vektor v som [x, y]" },
     op: { type: { kind: "string", oneOf: ["sum", "diff"] }, default: "sum", doc: "operasjon" },
+    kompleks: { type: { kind: "boolean" }, default: false, doc: "kompleks modus: Re/Im-akser og vektorene som komplekse tall z, w («3 + i»)" },
     height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
@@ -149,33 +167,82 @@ registerTemplate({
 });
 
 /* -------------------------------------------------- lineaer-transformasjon */
-const FIGURES: Record<string, [number, number][]> = {
-  kvadrat: [[0, 0], [1, 0], [1, 1], [0, 1]],
-  trekant: [[0, 0], [1.4, 0], [0.5, 1.2]],
-  hus: [[0, 0], [1, 0], [1, 1], [0.5, 1.5], [0, 1]],
-};
+type Mat2 = [[number, number], [number, number]];
+
+const matMul = (A: Mat2, B: Mat2): Mat2 => [
+  [A[0][0] * B[0][0] + A[0][1] * B[1][0], A[0][0] * B[0][1] + A[0][1] * B[1][1]],
+  [A[1][0] * B[0][0] + A[1][1] * B[1][0], A[1][0] * B[0][1] + A[1][1] * B[1][1]],
+];
+const matApply = (A: Mat2, [x, y]: [number, number]): [number, number] => [
+  A[0][0] * x + A[0][1] * y,
+  A[1][0] * x + A[1][1] * y,
+];
+const det2 = (A: Mat2): number => A[0][0] * A[1][1] - A[0][1] * A[1][0];
+
+/**
+ * 2×2 polar decomposition A = R·S: R = A·(AᵀA)^(−1/2) is a rotation, S is
+ * symmetric positive definite. Closed form: with M = AᵀA,
+ * √M = (M + √(det M)·I) / √(tr M + 2·√(det M)), then R = A·(√M)⁻¹.
+ * Returns the rotation angle θ of R plus S. Valid for det A > 0 — for
+ * reflections/singular A we return null and the caller falls back to
+ * straight-line interpolation.
+ */
+export function polar2(A: Mat2): { theta: number; S: Mat2 } | null {
+  if (!(det2(A) > 1e-9)) return null;
+  const [[a, b], [c, d]] = A;
+  const m00 = a * a + c * c;
+  const m01 = a * b + c * d;
+  const m11 = b * b + d * d;
+  const sDet = Math.sqrt(Math.max(m00 * m11 - m01 * m01, 0)); // = |det A|
+  const denom = Math.sqrt(m00 + m11 + 2 * sDet);
+  if (!(denom > 1e-9)) return null;
+  const S: Mat2 = [
+    [(m00 + sDet) / denom, m01 / denom],
+    [m01 / denom, (m11 + sDet) / denom],
+  ];
+  const dS = det2(S);
+  const Sinv: Mat2 = [
+    [S[1][1] / dS, -S[0][1] / dS],
+    [-S[1][0] / dS, S[0][0] / dS],
+  ];
+  const R = matMul(A, Sinv);
+  return { theta: Math.atan2(R[1][0], R[0][0]), S };
+}
+
+/** A(t) = R(t·θ)·((1−t)·I + t·S) — rotates naturally instead of shearing
+    straight from I to A. Falls back to linear interpolation when A has no
+    rotation-form polar decomposition (det ≤ 0). */
+export function interpolateMat(M: Mat2, polar: { theta: number; S: Mat2 } | null, t: number): Mat2 {
+  if (!polar) {
+    return [
+      [1 + (M[0][0] - 1) * t, M[0][1] * t],
+      [M[1][0] * t, 1 + (M[1][1] - 1) * t],
+    ];
+  }
+  const { theta, S } = polar;
+  const c = Math.cos(t * theta);
+  const sn = Math.sin(t * theta);
+  const Rt: Mat2 = [[c, -sn], [sn, c]];
+  const St: Mat2 = [
+    [1 + (S[0][0] - 1) * t, S[0][1] * t],
+    [S[1][0] * t, 1 + (S[1][1] - 1) * t],
+  ];
+  return matMul(Rt, St);
+}
+
+const UNIT_SQUARE: [number, number][] = [[0, 0], [1, 0], [1, 1], [0, 1]];
 
 function LinTrans({ params }: { params: P }) {
-  const M = params.matrix as [[number, number], [number, number]];
-  const fig = FIGURES[(params.figure as string) ?? "hus"];
+  const M = params.matrix as Mat2;
   const [s, setS] = useState(0);
   const objectColor = useRoleColor("object");
-  const touchColor = useRoleColor("touch");
   const t = useKtTheme();
-  const lerp = useMemo(() => {
-    const apply = ([x, y]: [number, number]): [number, number] => [
-      M[0][0] * x + M[0][1] * y,
-      M[1][0] * x + M[1][1] * y,
-    ];
-    return fig.map((p) => {
-      const q = apply(p);
-      return (tt: number): [number, number] => [
-        p[0] + (q[0] - p[0]) * tt,
-        p[1] + (q[1] - p[1]) * tt,
-      ];
-    });
-  }, [M, fig]);
-  const shape = lerp.map((f) => f(s));
+  const polar = useMemo(() => polar2(M), [M]);
+  const At = useMemo(() => interpolateMat(M, polar, s), [M, polar, s]);
+  // image of the unit square = parallelogram spanned by the columns of A(t)
+  const e1 = matApply(At, [1, 0]);
+  const e2 = matApply(At, [0, 1]);
+  const image: [number, number][] = [[0, 0], e1, [e1[0] + e2[0], e1[1] + e2[1]], e2];
   return (
     <>
       <KPlot
@@ -184,23 +251,18 @@ function LinTrans({ params }: { params: P }) {
         aspect="equal"
         height={(params.height as number) ?? 340}
       >
-        <Polygon points={fig} color={objectColor} fillOpacity={t.fill.areaOpacity / 2} weight={t.stroke.curveSecondary} />
-        <Polygon points={shape} color={touchColor} fillOpacity={t.fill.areaOpacity} weight={t.stroke.curvePrimary} />
-        {/* transformed basis vectors */}
-        <g style={{ opacity: 0.85 }}>
-          <KVector tip={[1 + (M[0][0] - 1) * s, M[1][0] * s]} role="alt" />
-          <KVector tip={[M[0][1] * s, 1 + (M[1][1] - 1) * s]} role="alt2" />
+        {/* faint reference copy of the untransformed unit square */}
+        <g style={{ opacity: 0.45 }}>
+          <Polygon points={UNIT_SQUARE} color={objectColor} fillOpacity={t.fill.areaOpacity / 3} weight={t.stroke.curveSecondary} />
         </g>
+        {/* the image under A(t) */}
+        <Polygon points={image} color={objectColor} fillOpacity={t.fill.areaOpacity} weight={t.stroke.curvePrimary} />
+        {/* transformed basis vectors e1 og e2 */}
+        <KVector tip={e1} role="touch" />
+        <KVector tip={e2} role="alt" />
       </KPlot>
       <KPanel position="readout">
-        <p className="kviz-formula">
-          <KFormula
-            tex={`A = \\begin{pmatrix} ${M[0][0]} & ${M[0][1]} \\\\ ${M[1][0]} & ${M[1][1]} \\end{pmatrix}, \\quad \\det A = ${fmt(
-              M[0][0] * M[1][1] - M[0][1] * M[1][0],
-              2
-            )}`}
-          />
-        </p>
+        <KReadout items={[{ label: "\\det", value: det2(At), digits: 2, role: "object" }]} />
       </KPanel>
       <KPanel position="controls">
         <KSlider label="t" min={0} max={1} step={0.01} value={s} onChange={setS} />
@@ -212,17 +274,17 @@ function LinTrans({ params }: { params: P }) {
 registerTemplate({
   id: "lineaer-transformasjon",
   description:
-    "En figur og basisvektorene under en 2×2-matrise, med glider som interpolerer fra identiteten. For lineære transformasjoner (S1/S2, universitetsforkurs).",
+    "Enhetskvadratet og basisvektorene e1, e2 under en 2×2-matrise; glideren interpolerer fra identiteten via polar-dekomponering, så rotasjoner faktisk roterer. Skriv A og det A i brødteksten, ikke i widgeten. For lineære transformasjoner (S1/S2, universitetsforkurs).",
   curriculum: ["S2", "forkurs"],
   params: {
     matrix: { type: { kind: "matrix2" }, required: true, doc: "2×2-matrisen [[a,b],[c,d]]" },
-    figure: { type: { kind: "string", oneOf: Object.keys(FIGURES) }, default: "hus", doc: "figuren som transformeres" },
+    figure: { type: { kind: "string", oneOf: ["kvadrat", "trekant", "hus"] }, default: "kvadrat", doc: "utgått — enhetskvadratet vises alltid; beholdt for bakoverkompatibilitet" },
     height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger (W6)" },
   },
   example: {
     template: "lineaer-transformasjon",
-    title: "Lineær transformasjon",
-    params: { matrix: [[1, 1], [0.5, 1.5]], figure: "hus" },
+    title: "Rotasjon 90°",
+    params: { matrix: [[0, -1], [1, 0]] },
   },
   render: (params) => <LinTrans params={params} />,
 });

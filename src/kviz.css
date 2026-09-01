@@ -77,7 +77,16 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 18px;
+  gap: 12px 14px;
+  border-top: 1px solid var(--kt-border);
+  margin-top: 10px;
+  padding-top: 12px;
+}
+/* two stacked panels share one instrument line — no double hairline */
+.kviz-panel--readout + .kviz-panel--controls {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 2px;
 }
 .kviz-panel--readout .kviz-formula,
 .kviz-panel--readout .kviz-readout {

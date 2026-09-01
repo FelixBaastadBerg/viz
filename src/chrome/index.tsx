@@ -88,15 +88,16 @@ export interface KReadoutItem {
   role?: KtRole;
 }
 
-/** Live values row: muted labels, accent-ink tabular numbers. */
+/** Live values as instrument chips: one pill per value, muted label +
+    accent-ink tabular number. Sits on the instrument line below the figure. */
 export function KReadout({ items }: { items: KReadoutItem[] }) {
   const theme = useKtTheme();
   return (
     <p className="kviz-readout">
       {items.map((it, i) => (
-        <span key={i}>
+        <span key={i} className="kviz-chip">
           <KFormula tex={it.label} />
-          {" = "}
+          <span className="kviz-chip-eq">=</span>
           <span
             className="kviz-value"
             style={it.role ? { color: theme.accents[it.role].ink } : undefined}

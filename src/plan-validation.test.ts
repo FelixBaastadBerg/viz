@@ -10,6 +10,7 @@ import "./spec/templates/riemann";
 import "./spec/templates/omdreining3d";
 import "./spec/templates/parametrisk";
 import "./spec/templates/dijkstra";
+import "./spec/templates/steg";
 
 const P = "/private/tmp/claude-501/-Users-fb-Documents-Kateter/187840b9-90b7-4062-9c7d-95f521b5bf0c/scratchpad/plans";
 const H = "/private/tmp/claude-501/-Users-fb-Documents-Kateter/187840b9-90b7-4062-9c7d-95f521b5bf0c/scratchpad/harvest";

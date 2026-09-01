@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useTransformContext, vec } from "mafs";
 import { KPlot } from "../../2d/KPlot";
-import { KCurve, KPoint, KLabel } from "../../2d/primitives";
+import { KCurve, KPoint, KLabel, KVector } from "../../2d/primitives";
+import type { KtRole } from "../../theme/types";
 import { KPanel, KFormula, KReadout, KSlider } from "../../chrome";
 import { KScene3D } from "../../3d/KScene3D";
 import { KAxes3D } from "../../3d/KAxes3D";
@@ -18,36 +19,92 @@ import { fmt, simpson2d } from "../../math";
 type P = Record<string, unknown>;
 
 /* -------------------------------------------------------- likning-grafisk */
+/** First sign change of f−g over [x0,x1] whose point lies inside the view,
+    refined by bisection. Falls back to the first root when none is in view. */
+function findCrossing(
+  f: (x: number) => number,
+  g: (x: number) => number,
+  [xa, xb]: [number, number],
+  [ya, yb]: [number, number]
+): [number, number] | null {
+  const h = (x: number) => f(x) - g(x);
+  const N = 400;
+  const roots: number[] = [];
+  let prev = h(xa);
+  for (let i = 1; i <= N; i++) {
+    const x = xa + ((xb - xa) * i) / N;
+    const cur = h(x);
+    if (Number.isFinite(prev) && Number.isFinite(cur) && prev * cur <= 0 && prev !== cur) {
+      let a = xa + ((xb - xa) * (i - 1)) / N;
+      let b = x;
+      for (let k = 0; k < 60; k++) {
+        const m = (a + b) / 2;
+        if (h(a) * h(m) <= 0) b = m;
+        else a = m;
+      }
+      roots.push((a + b) / 2);
+    }
+    prev = cur;
+  }
+  const inView = roots.find((x) => f(x) >= ya && f(x) <= yb);
+  const x = inView ?? roots[0];
+  return x === undefined ? null : [x, f(x)];
+}
+
 function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
   const f = fn1(params.f as string);
   const g = fn1(params.g as string);
   const view = { x: params.viewX as [number, number], y: params.viewY as [number, number] };
+  const statisk = params.statisk === true && !quiz;
   const [x0, setX0] = useState(params.x0 as number);
   const [touched, setTouched] = useState(false);
   const gap = f(x0) - g(x0);
+  // statisk: the intersection is computed, marked and annotated — no dragging
+  const cross = statisk ? findCrossing(f, g, view.x, view.y) : null;
+  const dx = view.x[1] - view.x[0];
+  const dy = view.y[1] - view.y[0];
+  // arrow approaches from over/right; flips when the point sits near an edge
+  const sx = cross && cross[0] > (view.x[0] + view.x[1]) / 2 ? -1 : 1;
+  const sy = cross && cross[1] + 0.28 * dy > view.y[1] ? -1 : 1;
+  const tail: [number, number] = cross
+    ? [cross[0] + sx * 0.16 * dx, cross[1] + sy * 0.18 * dy]
+    : [0, 0];
+  const tip: [number, number] = cross
+    ? [cross[0] + sx * 0.03 * dx, cross[1] + sy * 0.045 * dy]
+    : [0, 0];
   return (
     <>
       <KPlot viewBox={view} height={(params.height as number) ?? 340}>
         <KCurve f={f} />
         <KCurve f={g} role="alt" weight="secondary" />
-        <KPoint
-          point={[x0, f(x0)]}
-          constrain={(x) => [x, f(x)]}
-          onMove={([x]) => {
-            setX0(x);
-            setTouched(true);
-          }}
-        />
+        {!statisk && (
+          <KPoint
+            point={[x0, f(x0)]}
+            constrain={(x) => [x, f(x)]}
+            onMove={([x]) => {
+              setX0(x);
+              setTouched(true);
+            }}
+          />
+        )}
         <KLabel tex="f" at={[view.x[1] - 0.5, f(view.x[1] - 0.7) + 0.5]} role="object" />
         <KLabel tex="g" at={[view.x[1] - 0.5, g(view.x[1] - 0.7) + 0.5]} role="alt" />
+        {cross && (
+          <>
+            <KVector tail={tail} tip={tip} role="alt2" />
+            <DotMarker at={cross} role="alt2" />
+            <KLabel
+              tex={`\\text{${(params.merkelapp as string) || "(x, y)-verdiene som passer begge"}}`}
+              at={[tail[0], tail[1] + sy * 0.06 * dy]}
+              role="alt2"
+            />
+          </>
+        )}
       </KPlot>
       {quiz ? (
         <SpecQuiz quiz={quiz} value={x0} fValue={f(x0)} touched={touched} />
-      ) : (
+      ) : statisk ? null : (
         <KPanel position="readout">
-          <p className="kviz-formula">
-            <KFormula tex={(params.tex as string) || "f(x) = g(x)"} />
-          </p>
           {(params.readout as string) === "verdier" ? (
             <KReadout
               items={[
@@ -73,12 +130,14 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
 registerTemplate({
   id: "likning-grafisk",
   description:
-    "To grafer og et dragbart punkt; viser f(x) − g(x) live for grafisk likningsløsning. For likninger og skjæringspunkter.",
+    "To grafer for grafisk likningsløsning: dragbart punkt med live f(x) − g(x), eller statisk modus som markerer skjæringspunktet med pil og merkelapp. For likninger og skjæringspunkter.",
   curriculum: ["1T"],
   params: {
     f: { type: { kind: "expr", vars: 1 }, required: true, doc: "venstresiden f" },
     g: { type: { kind: "expr", vars: 1 }, required: true, doc: "høyresiden g" },
-    tex: { type: { kind: "string" }, default: "", doc: "KaTeX-visning av likningen" },
+    tex: { type: { kind: "string" }, default: "", doc: "utgått — ignoreres (likningen hører hjemme i brødteksten); beholdt for bakoverkompatibilitet" },
+    statisk: { type: { kind: "boolean" }, default: false, doc: "statisk figur: intet dragbart punkt/readouts — skjæringspunktet beregnes og markeres med pil og merkelapp" },
+    merkelapp: { type: { kind: "string" }, default: "(x, y)-verdiene som passer begge", doc: "kort tekst ved pilen i statisk modus" },
     viewX: { type: { kind: "range" }, default: [-5, 5], doc: "x-utsnitt" },
     viewY: { type: { kind: "range" }, default: [-4, 6], doc: "y-utsnitt" },
     x0: { type: { kind: "number" }, default: 0, doc: "startposisjon" },
@@ -177,11 +236,11 @@ function HoleMarker({ at }: { at: [number, number] }) {
 }
 
 /** Small filled marker (e.g. an isolated function value) in pixel space. */
-function DotMarker({ at }: { at: [number, number] }) {
+function DotMarker({ at, role = "object" }: { at: [number, number]; role?: KtRole }) {
   const t = useKtTheme();
   const ctx = useTransformContext();
   const [px, py] = vec.transform(at, vec.matrixMult(ctx.viewTransform, ctx.userTransform));
-  return <circle cx={px} cy={py} r={5} fill={t.accents.object.stroke} />;
+  return <circle cx={px} cy={py} r={5} fill={t.accents[role].stroke} />;
 }
 
 function GrenseUtforsker({ params }: { params: P }) {

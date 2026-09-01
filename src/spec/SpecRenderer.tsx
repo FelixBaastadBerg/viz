@@ -11,6 +11,7 @@ import "./templates/parametrisk";
 import "./templates/riemann";
 import "./templates/omdreining3d";
 import "./templates/dijkstra";
+import "./templates/steg";
 
 /**
  * Render a widget spec. Invalid specs render the validation errors instead of

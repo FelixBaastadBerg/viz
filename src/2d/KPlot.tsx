@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { Mafs, Coordinates } from "mafs";
+import { Mafs, Coordinates, Text as MafsText } from "mafs";
 import { useElementSize } from "../hooks";
 import { useKtTheme } from "../theme/ThemeProvider";
 
@@ -20,6 +20,8 @@ export interface KPlotProps {
   yTick?: number;
   /** "equal" preserves a 1:1 unit aspect (circles stay round). */
   aspect?: "auto" | "equal";
+  /** Axis end labels, e.g. {x: "Re", y: "Im"} for the complex plane. */
+  axisLabels?: { x?: string; y?: string };
   children?: ReactNode;
 }
 
@@ -38,6 +40,7 @@ export function KPlot({
   xTick = 1,
   yTick = 1,
   aspect = "auto",
+  axisLabels,
   children,
 }: KPlotProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -60,6 +63,16 @@ export function KPlot({
           />
         )}
         {children}
+        {axisLabels?.x && (
+          <MafsText x={viewBox.x[1]} y={0} attach="nw" size={15} color="var(--kt-text-muted)">
+            {axisLabels.x}
+          </MafsText>
+        )}
+        {axisLabels?.y && (
+          <MafsText x={0} y={viewBox.y[1]} attach="se" size={15} color="var(--kt-text-muted)">
+            {axisLabels.y}
+          </MafsText>
+        )}
       </Mafs>
     </div>
   );
