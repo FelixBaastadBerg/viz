@@ -15,3 +15,12 @@ alle deployet og prod-verifisert:
 Bonus: atlas fikk også bygg-først-deploy — databasen restartes ikke lenger
 ved backend-deploys. Kjent kosmetisk rest: choice-rader sprer inline-KaTeX
 med store mellomrom (space-between) — småfiks senere.
+
+## 2026-09-01 — Choice-styling fikset (runde 21)
+
+Rotårsak: global regel `div[data-node-view-wrapper] div {display/justify:
+inherit}` lot svarradens flex space-between arve inn i selve svarteksten →
+tekst + inline-KaTeX ble spredte flex-items. Fiks (be9b67b): svarinnholdet
+pinnes til display:block via inline-style (slår den globale regelen), og
+LatexInline-wrapperen ble <span> (korrekt inline-HTML, utenfor div-regelens
+rekkevidde). Verifisert i prod: naturlig tekstflyt med inline-matte.
