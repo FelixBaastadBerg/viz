@@ -151,8 +151,10 @@ export function KLegend({ corner = "tl", items }: KLegendProps) {
         display: "flex",
         flexDirection: "column",
         alignItems: "flex-start",
+        justifyContent: "flex-start",
+        flex: "none",
         gap: 3,
-        width: "auto",
+        width: "max-content",
         maxWidth: "calc(100% - 24px)",
         boxSizing: "border-box",
         background: "#fff",
@@ -174,6 +176,12 @@ export function KLegend({ corner = "tl", items }: KLegendProps) {
             className="kviz-legend-row"
             style={{
               display: "flex",
+              // the host's `div[data-node-view-wrapper] div { flex-direction:
+              // inherit }` would inherit the box's column — pin every flex
+              // property inline
+              flexDirection: "row",
+              justifyContent: "flex-start",
+              flex: "none",
               alignItems: "center",
               gap: 7,
               width: "auto",
