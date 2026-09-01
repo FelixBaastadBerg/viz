@@ -1,5 +1,6 @@
 /** Templates: graphical equations, 3D volume. */
 import { useState } from "react";
+import { useTransformContext, vec } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KPoint, KLabel } from "../../2d/primitives";
 import { KPanel, KFormula, KReadout, KCaption, KSlider } from "../../chrome";
@@ -160,4 +161,91 @@ registerTemplate({
     },
   },
   render: (params) => <FlateVolum params={params} />,
+});
+
+/* -------------------------------------------------------- grense-utforsker */
+/** Open-circle marker («hull») drawn in pixel space so it stays round. */
+function HoleMarker({ at }: { at: [number, number] }) {
+  const t = useKtTheme();
+  const ctx = useTransformContext();
+  const [px, py] = vec.transform(at, vec.matrixMult(ctx.viewTransform, ctx.userTransform));
+  return (
+    <circle
+      cx={px}
+      cy={py}
+      r={5.5}
+      fill={t.stage.canvas}
+      stroke={t.accents.object.stroke}
+      strokeWidth={2.5}
+    />
+  );
+}
+
+function GrenseUtforsker({ params }: { params: P }) {
+  const f = fn1(params.f as string);
+  const a = params.a as number;
+  const L = params.L as number;
+  const view = { x: params.viewX as [number, number], y: params.viewY as [number, number] };
+  const [x0, setX0] = useState(params.x0 as number);
+  return (
+    <div className="kviz-widget" style={{ position: "relative" }}>
+      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
+        <KCurve f={f} />
+        {params.hole !== false && <HoleMarker at={[a, L]} />}
+        <KPoint
+          point={[x0, f(x0)]}
+          constrain={(x) => [x, f(x)]}
+          onMove={([x]) => setX0(x)}
+        />
+      </KPlot>
+      <KPanel position="readout">
+        {params.tex ? (
+          <p className="kviz-formula">
+            <KFormula tex={params.tex as string} />
+          </p>
+        ) : null}
+        <KReadout
+          items={[
+            { label: "x", value: x0, role: "touch" },
+            { label: "f(x)", value: f(x0), role: "object" },
+          ]}
+        />
+        {params.caption ? <KCaption>{params.caption as string}</KCaption> : null}
+      </KPanel>
+    </div>
+  );
+}
+
+registerTemplate({
+  id: "grense-utforsker",
+  description:
+    "Grenseverdi i et punkt: ÉN kurve (gjerne delt funksjon via ternær mathjs-syntaks), åpent hull-symbol i grensepunktet, og et dragbart punkt som viser x og f(x) på vei mot grensen. For grenser og kontinuitet.",
+  curriculum: ["R1", "universitet"],
+  params: {
+    f: { type: { kind: "expr", vars: 1 }, required: true, doc: "funksjonen — delt funksjon skrives ternært: \"x < 2 ? x^2 : 2x\"" },
+    a: { type: { kind: "number" }, required: true, doc: "grensepunktet" },
+    L: { type: { kind: "number" }, required: true, doc: "grenseverdien (hullets y-verdi)" },
+    hole: { type: { kind: "boolean" }, default: true, doc: "tegn åpent hull i (a, L)" },
+    tex: { type: { kind: "string" }, default: "", doc: "KaTeX over avlesningene" },
+    caption: { type: { kind: "string" }, default: "", doc: "instruksjon under avlesningene" },
+    height: { type: { kind: "number", min: 200, max: 640 }, default: 340, doc: "høyde i px — kompakt i løsninger" },
+    viewX: { type: { kind: "range" }, default: [-1, 5], doc: "x-utsnitt" },
+    viewY: { type: { kind: "range" }, default: [-1, 9], doc: "y-utsnitt" },
+    x0: { type: { kind: "number" }, default: 0.8, doc: "startposisjon for punktet" },
+  },
+  example: {
+    template: "grense-utforsker",
+    title: "Grensen i x = 2",
+    params: {
+      f: "x < 2 ? x^2 : 2x",
+      a: 2,
+      L: 4,
+      tex: "\\lim_{x \\to 2} f(x) = 4",
+      caption: "Dra punktet mot x = 2 fra begge sider — f(x) nærmer seg 4, selv om f ikke er definert akkurat der.",
+      viewX: [-1, 5],
+      viewY: [-1, 9],
+      x0: 0.8,
+    },
+  },
+  render: (params) => <GrenseUtforsker params={params} />,
 });
