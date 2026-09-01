@@ -14,6 +14,10 @@ export interface KPlotProps {
   axes?: boolean;
   /** Grid subdivisions (default off — the grid is furniture, not content). */
   subdivisions?: boolean;
+  /** Axis line/label spacing (default 1) — raise on tall/wide ranges so the
+      labels never crowd (W6). */
+  xTick?: number;
+  yTick?: number;
   children?: ReactNode;
 }
 
@@ -29,6 +33,8 @@ export function KPlot({
   zoom = false,
   axes = true,
   subdivisions = false,
+  xTick = 1,
+  yTick = 1,
   children,
 }: KPlotProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -46,8 +52,8 @@ export function KPlot({
         {axes && (
           <Coordinates.Cartesian
             subdivisions={subdivisions ? 4 : false}
-            xAxis={{ labels: (n) => (n === 0 ? "" : String(n)) }}
-            yAxis={{ labels: (n) => (n === 0 ? "" : String(n)) }}
+            xAxis={{ lines: xTick, labels: (n) => (n === 0 ? "" : String(n)) }}
+            yAxis={{ lines: yTick, labels: (n) => (n === 0 ? "" : String(n)) }}
           />
         )}
         {children}

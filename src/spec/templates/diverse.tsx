@@ -199,7 +199,12 @@ function GrenseUtforsker({ params }: { params: P }) {
   const marks = (params.marks as [number, number][]) ?? [];
   return (
     <div className="kviz-widget" style={{ position: "relative" }}>
-      <KPlot viewBox={view} height={(params.height as number) ?? 340}>
+      <KPlot
+        viewBox={view}
+        height={(params.height as number) ?? 340}
+        xTick={(params.xTick as number) ?? 1}
+        yTick={(params.yTick as number) ?? 1}
+      >
         {extra.map((g, i) => (
           <KCurve key={i} f={g} role="alt" weight="secondary" />
         ))}
@@ -254,6 +259,8 @@ registerTemplate({
       default: [],
       doc: "fylte punkter [[x, y], …] — f.eks. en isolert funksjonsverdi eller intervallender",
     },
+    xTick: { type: { kind: "number", min: 0.25, max: 20 }, default: 1, doc: "avstand mellom x-aksetall — øk så tallene ikke stues (W6)" },
+    yTick: { type: { kind: "number", min: 0.25, max: 20 }, default: 1, doc: "avstand mellom y-aksetall — øk på høye utsnitt (W6)" },
   },
   example: {
     template: "grense-utforsker",
