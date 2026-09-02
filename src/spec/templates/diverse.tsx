@@ -4,7 +4,7 @@ import { useTransformContext, vec } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KPoint, KLabel, KVector, curveLabelPos } from "../../2d/primitives";
 import type { KtRole } from "../../theme/types";
-import { KPanel, KFormula, KFig, KLegend, KSlider } from "../../chrome";
+import { KPanel, KFig, KLegend, KSlider } from "../../chrome";
 import { KScene3D } from "../../3d/KScene3D";
 import { KAxes3D } from "../../3d/KAxes3D";
 import { KSurface } from "../../3d/KSurface";
@@ -14,7 +14,7 @@ import { registerTemplate } from "../registry";
 import { fn1, fn2 } from "../expr";
 import type { QuizWrapper } from "../types";
 import { SpecQuiz } from "../SpecQuiz";
-import { fmt, simpson2d } from "../../math";
+import { simpson2d } from "../../math";
 
 type P = Record<string, unknown>;
 
@@ -37,8 +37,11 @@ function HandNote({
   const M = vec.matrixMult(ctx.viewTransform, ctx.userTransform);
   const [x1, y1] = vec.transform(tail, M);
   const [x2, y2] = vec.transform(tip, M);
-  const col = (t.accents as any).alt2?.stroke ?? t.accents.alt.stroke;
-  const ink = (t.accents as any).alt2?.ink ?? t.accents.alt.ink;
+  // W10 + Felix 2026-09-01: arrow AND text in the alt2 accent (the same
+  // purple as the marked point) — stroke for the arrow, ink for the text
+  // (arv: #8757C8 / #6E41AC, both clearly purple and legible on paper).
+  const col = t.accents.alt2.stroke;
+  const ink = t.accents.alt2.ink;
   // curved shaft: control point pushed perpendicular for a lazy hand arc
   const mx = (x1 + x2) / 2 - (y2 - y1) * 0.22;
   const my = (y1 + y2) / 2 + (x2 - x1) * 0.22;
@@ -49,17 +52,19 @@ function HandNote({
   const a2 = ang + Math.PI + 0.45;
   return (
     <g style={{ pointerEvents: "none" }}>
+      {/* inline style stroke, not the attribute: mafs' `.MafsView path`
+          rule would otherwise repaint the arrow in --mafs-fg (near-black) */}
       <path
         d={`M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`}
         fill="none"
-        stroke={col}
+        style={{ stroke: col }}
         strokeWidth={2.4}
         strokeLinecap="round"
       />
       <path
         d={`M ${x2 + hl * Math.cos(a1)} ${y2 + hl * Math.sin(a1)} L ${x2} ${y2} L ${x2 + hl * Math.cos(a2)} ${y2 + hl * Math.sin(a2)}`}
         fill="none"
-        stroke={col}
+        style={{ stroke: col }}
         strokeWidth={2.4}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -68,8 +73,10 @@ function HandNote({
         x={x1 + (anchor === "start" ? 6 : -6)}
         y={y1 - 8}
         textAnchor={anchor}
-        fill={ink}
         style={{
+          // inline style, not the fill attribute: mafs' `.MafsView text`
+          // rule would otherwise repaint the text in --mafs-fg (near-black)
+          fill: ink,
           fontFamily: t.typography.display,
           fontSize: 21,
           fontWeight: t.typography.displayWeight,
@@ -128,13 +135,29 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
   const dy = view.y[1] - view.y[0];
   // arrow approaches from over/right; flips when the point sits near an edge
   const sx = cross && cross[0] > (view.x[0] + view.x[1]) / 2 ? -1 : 1;
-  const sy = cross && cross[1] + 0.28 * dy > view.y[1] ? -1 : 1;
+  const sy = cross && cross[1] + 0.32 * dy > view.y[1] ? -1 : 1;
   const tail: [number, number] = cross
-    ? [cross[0] + sx * 0.16 * dx, cross[1] + sy * 0.18 * dy]
+    ? [cross[0] + sx * 0.2 * dx, cross[1] + sy * 0.22 * dy]
     : [0, 0];
   const tip: [number, number] = cross
     ? [cross[0] + sx * 0.03 * dx, cross[1] + sy * 0.045 * dy]
     : [0, 0];
+  // static mode: keep the curve labels on the OPPOSITE side of the annotation
+  const labelSide = statisk && cross ? ((-sx) as -1 | 1) : undefined;
+  const fFrac = labelSide === undefined ? 0.78 : labelSide === -1 ? 0.14 : 0.86;
+  const gFrac = labelSide === undefined ? 0.86 : labelSide === -1 ? 0.26 : 0.74;
+  const fPos = curveLabelPos(f, view, fFrac, 0.09, labelSide);
+  let gPos = curveLabelPos(g, view, gFrac, 0.09, labelSide);
+  const crowdsF =
+    Math.abs(gPos[0] - fPos[0]) < 0.12 * dx && Math.abs(gPos[1] - fPos[1]) < 0.18 * dy;
+  const crowdsCross =
+    cross !== null &&
+    Math.abs(gPos[0] - cross[0]) < 0.16 * dx &&
+    Math.abs(gPos[1] - cross[1]) < 0.1 * dy;
+  if (labelSide !== undefined && (crowdsF || crowdsCross)) {
+    // the label crowds f's label or the marked point — flip it under its curve
+    gPos = curveLabelPos(g, view, gFrac, -0.14, labelSide);
+  }
   const legendItems =
     quiz || statisk
       ? undefined
@@ -168,8 +191,8 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
               }}
             />
           )}
-          <KLabel tex={(params.fLabel as string) || "y = f(x)"} at={curveLabelPos(f, view)} role="object" />
-          <KLabel tex={(params.gLabel as string) || "y = g(x)"} at={curveLabelPos(g, view, 0.86)} role="alt" />
+          <KLabel tex={(params.fLabel as string) || "y = f(x)"} at={fPos} role="object" />
+          <KLabel tex={(params.gLabel as string) || "y = g(x)"} at={gPos} role="alt" />
           {cross && (
             <>
               <DotMarker at={cross} role="alt2" />
@@ -229,21 +252,22 @@ function FlateVolum({ params }: { params: P }) {
   const V = simpson2d(f, a, b, c, d);
   return (
     <>
-      <KScene3D camera="iso" floorGrid={domain}>
-        <KAxes3D xy={domain} />
-        <KSurface f={f} domain={domain} />
-        <KRegionColumn f={f} a={a} b={b} c={c} d={d} />
-      </KScene3D>
-      <KPanel position="readout">
-        <p className="kviz-formula">
-          <KFormula tex={(params.tex as string) || "V=\\iint_R f\\,dA"} />
-        </p>
-        <p className="kviz-readout">
-          <span>
-            V ≈ <span className="kviz-value">{fmt(V, 3)}</span>
-          </span>
-        </p>
-      </KPanel>
+      {/* W7: the live volume lives in a legend box over the 3D stage (KFig
+          provides the relative wrapper, same pattern as the 2D figures) */}
+      <KFig
+        legend={
+          <KLegend
+            corner="tl"
+            items={[{ label: "V=\\iint_R f\\,dA", value: V, digits: 3, role: "object" }]}
+          />
+        }
+      >
+        <KScene3D camera="iso" floorGrid={domain}>
+          <KAxes3D xy={domain} />
+          <KSurface f={f} domain={domain} />
+          <KRegionColumn f={f} a={a} b={b} c={c} d={d} />
+        </KScene3D>
+      </KFig>
       <KPanel position="controls">
         <KSlider label="a" min={-domain} max={domain - GAP} step={0.05} value={a}
           onChange={(v) => { setA(v); if (v > b - GAP) setB(v + GAP); }} />
@@ -265,7 +289,7 @@ registerTemplate({
   curriculum: ["universitet"],
   params: {
     f: { type: { kind: "expr", vars: 2 }, required: true, doc: "flaten f(x, y) — bør være ≥ 0 på domenet om volum skal være ærlig" },
-    tex: { type: { kind: "string" }, default: "", doc: "KaTeX-visning" },
+    tex: { type: { kind: "string" }, default: "", doc: "utgått — ignoreres (W7: verdien står i legenden med fast formel-label); beholdt for bakoverkompatibilitet" },
     domain: { type: { kind: "number", min: 1, max: 6 }, default: 3.4, doc: "domenehalvbredde" },
     region: { type: { kind: "numbers" }, default: [-2, 1.5, -1.5, 2], doc: "startområdet [a, b, c, d]" },
   },

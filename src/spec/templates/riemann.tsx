@@ -15,7 +15,7 @@ import { useMemo, useState } from "react";
 import { Polygon } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, useRoleColor } from "../../2d/primitives";
-import { KFormula, KMixed, KFig, KLegend } from "../../chrome";
+import { KMixed, KFig, KLegend, KPanel, KSlider } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
@@ -87,13 +87,11 @@ function RiemannSum({ params }: { params: P }) {
         </KPlot>
       </KFig>
 
-      <div className="kviz-widget-controls">
-        <KFormula tex="n" />
-        <input type="range" className="kviz-slider kviz-slider--lead"
-          min={1} max={params.nMax as number} step={1} value={n}
-          aria-label="antall rektangler"
-          onChange={(e) => setN(Math.round(+e.target.value))} />
-      </div>
+      {/* W8: the slider sits centred on the instrument line below */}
+      <KPanel position="controls">
+        <KSlider label="n" min={1} max={params.nMax as number} step={1}
+          value={n} digits={0} onChange={(v) => setN(Math.round(v))} />
+      </KPanel>
     </div>
   );
 }

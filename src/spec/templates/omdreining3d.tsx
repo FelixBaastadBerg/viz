@@ -3,19 +3,19 @@
  * solid (soft blue target, same language as riemann-sum's showTarget), and
  * V_n crawls toward V = π∫f² as n grows.
  *
- * W-rules: intro with KaTeX above (W1); values in a quiet line under the
- * canvas — a per-widget call (W5): a 3D surface offers no stable in-figure
- * anchor, so the verdilinje layout is the right fallback here.
+ * W-rules: intro with KaTeX above (W1); values (V_n, π∫f²) in a KLegend
+ * box over the 3D stage (W7, tl corner leaves the solid clear); the
+ * n-slider centred on the instrument line below (W8).
  */
 import { useMemo, useState } from "react";
 import * as THREE from "three";
 import { KScene3D } from "../../3d/KScene3D";
 import { KAxes3D } from "../../3d/KAxes3D";
-import { KFormula, KMixed } from "../../chrome";
+import { KMixed, KFig, KLegend, KPanel, KSlider } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
-import { fmt, simpson } from "../../math";
+import { simpson } from "../../math";
 
 type P = Record<string, unknown>;
 
@@ -81,30 +81,34 @@ function Omdreining3D({ params }: { params: P }) {
         <p className="kviz-intro"><KMixed text={params.intro as string} /></p>
       ) : null}
 
-      <KScene3D camera="iso" target={[(a + b) / 2, 0, 0]} floorGrid={0}>
-        <KAxes3D xy={b + 1} z={3} />
-        {showTarget && (
-          <SolidOfRevolution f={f} a={a} b={b}
-            color={t.accents.object.stroke} opacity={0.16} />
-        )}
-        <Discs f={f} a={a} b={b} n={n} color={t.accents.touch.stroke} />
-      </KScene3D>
+      {/* W7: values in a legend box over the 3D stage (tl leaves the solid
+          clear); KFig provides the relative wrapper, as in the 2D figures */}
+      <KFig
+        legend={
+          <KLegend
+            corner="tl"
+            items={[
+              { label: "V_n", value: vn, role: "touch" },
+              { label: "\\pi\\int_a^b f(x)^2\\,dx", value: exact, role: "object" },
+            ]}
+          />
+        }
+      >
+        <KScene3D camera="iso" target={[(a + b) / 2, 0, 0]} floorGrid={0}>
+          <KAxes3D xy={b + 1} z={3} />
+          {showTarget && (
+            <SolidOfRevolution f={f} a={a} b={b}
+              color={t.accents.object.stroke} opacity={0.16} />
+          )}
+          <Discs f={f} a={a} b={b} n={n} color={t.accents.touch.stroke} />
+        </KScene3D>
+      </KFig>
 
-      <div className="kviz-widget-controls">
-        <KFormula tex="n" />
-        <input type="range" className="kviz-slider kviz-slider--lead"
-          min={1} max={params.nMax as number} step={1} value={n}
-          aria-label="antall skiver"
-          onChange={(e) => setN(Math.round(+e.target.value))} />
-        <span className="kviz-widget-values">
-          <span style={{ color: t.accents.touch.ink }}>
-            <KFormula tex={`V_n = ${fmt(vn, 2)}`} />
-          </span>
-          <span style={{ color: t.accents.object.ink }}>
-            <KFormula tex={`\\pi\\int_a^b f(x)^2 dx = ${fmt(exact, 2)}`} />
-          </span>
-        </span>
-      </div>
+      {/* W8: the slider sits centred on the instrument line below */}
+      <KPanel position="controls">
+        <KSlider label="n" min={1} max={params.nMax as number} step={1}
+          value={n} digits={0} onChange={(v) => setN(Math.round(v))} />
+      </KPanel>
     </div>
   );
 }

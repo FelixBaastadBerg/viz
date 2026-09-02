@@ -153,24 +153,49 @@ export function KLabel({ tex, at, role, katexOptions }: KLabelProps) {
  * W9: pick a quiet spot for a curve label («y = f(x)» in the curve's colour):
  * a point loosely along the curve, offset by `dy` view-heights, kept inside
  * the view. Scans a few x-fractions and returns the first that fits.
+ * Fits = inside the view, at least 8 % of the view height away from the
+ * x-axis and 8 % of the width away from the y-axis (axis numbers live
+ * there), preferring the outer parts of the x-range over the middle.
+ * `side` restricts candidates to the left (-1) or right (1) half — used to
+ * keep labels on the opposite side of an annotation.
  */
 export function curveLabelPos(
   f: (x: number) => number,
   view: { x: [number, number]; y: [number, number] },
   frac = 0.78,
-  dy = 0.09
+  dy = 0.09,
+  side?: -1 | 1
 ): [number, number] {
   const [xa, xb] = view.x;
   const [ya, yb] = view.y;
+  const w = xb - xa;
   const h = yb - ya;
   const margin = 0.07 * h;
-  const cands = [frac, 0.64, 0.5, 0.34, 0.2, 0.88];
-  for (const c of cands) {
-    const x = xa + (xb - xa) * c;
-    const y = f(x) + dy * h;
-    if (Number.isFinite(y) && y > ya + margin && y < yb - margin) return [x, y];
+  const clearY = 0.08 * h; // keep clear of the x-axis (tick numbers)
+  const clearX = 0.1 * w; // keep clear of the y-axis (tick numbers; labels are wide)
+  // requested frac first, then outer edges before the middle
+  let cands = [frac, 0.9, 0.1, 0.8, 0.2, 0.68, 0.32, 0.6, 0.4, 0.5];
+  if (side !== undefined) {
+    cands = cands.filter((c, i) => i === 0 || (side === -1 ? c < 0.45 : c > 0.55));
   }
-  const x = xa + (xb - xa) * frac;
+  const fits = (x: number, y: number) =>
+    Number.isFinite(y) &&
+    y > ya + margin &&
+    y < yb - margin &&
+    (ya > 0 || yb < 0 || Math.abs(y) > clearY) &&
+    (xa > 0 || xb < 0 || Math.abs(x) > clearX);
+  for (const c of cands) {
+    const x = xa + w * c;
+    const y = f(x) + dy * h;
+    if (fits(x, y)) return [x, y];
+  }
+  // relaxed fallback: keep the axis clearances but allow any candidate y-side
+  for (const c of cands) {
+    const x = xa + w * c;
+    const y = f(x) - dy * h;
+    if (fits(x, y)) return [x, y];
+  }
+  const x = xa + w * frac;
   const y = f(x);
   return [x, Math.min(Math.max(Number.isFinite(y) ? y : (ya + yb) / 2, ya + margin), yb - margin)];
 }
