@@ -271,7 +271,21 @@ export function KSlider({
 }: KSliderProps) {
   const id = useId();
   return (
-    <div className="kviz-slider-row">
+    <div
+      className="kviz-slider-row"
+      style={{
+        // pin the flex layout inline: the host's `div[data-node-view-wrapper]
+        // div { display/width/gap: inherit }` rule turns the row into a
+        // full-width block otherwise
+        display: "flex",
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 12,
+        width: "auto",
+        flex: "none",
+      }}
+    >
       <label htmlFor={id}>
         <KFormula tex={label} />
         &nbsp;=
