@@ -94,6 +94,9 @@ export function KSurface({
       </mesh>
       {coordCurves && (
         <lineSegments geometry={curves}>
+          {/* Engraving tint ON the surface, not stage paint — three.js
+              materials can't consume the --kt-stage-canvas CSS var, and at
+              coordCurveOpacity the theme-vs-host difference is invisible. */}
           <lineBasicMaterial
             color={theme.stage.canvas}
             transparent

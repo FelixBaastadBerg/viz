@@ -40,6 +40,8 @@
 }
 .kviz-stage--3d {
   min-height: 300px;
+  /* the WebGL canvas clears transparent — this var IS the 3D background */
+  background: var(--kt-bg);
 }
 /* embedded contexts give the widget no outer height: the generic
    `.kviz-widget .kviz-stage { min-height: 0 }` outranks the plain class,

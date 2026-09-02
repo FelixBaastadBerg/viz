@@ -193,7 +193,7 @@ function DijkstraGraf({ params }: { params: P }) {
                 <circle cx={x} cy={y} r={R + 6} fill="none"
                   stroke={touch.stroke} strokeWidth={3.5} />
               )}
-              <circle cx={x} cy={y} r={R} fill={t.stage.canvas}
+              <circle cx={x} cy={y} r={R} fill="var(--kt-bg)"
                 stroke={fin ? right.stroke : obj.stroke} strokeWidth={2.4} />
               {fin && (
                 <circle cx={x} cy={y} r={R} fill={right.stroke} fillOpacity={0.14} />

@@ -54,7 +54,9 @@ export function KScene3D({
         camera={{ position: cam.position, up: [0, 0, 1], fov: cam.fov }}
         onCreated={({ gl }) => {
           gl.localClippingEnabled = true;
-          gl.setClearColor(theme.stage.canvas);
+          /* Transparent clear: the stage div's background (--kt-bg, host-
+           * overridable via --kt-stage-canvas) shows through the canvas. */
+          gl.setClearColor(0x000000, 0);
         }}
       >
         <Scene3DThemeContext.Provider value={theme}>

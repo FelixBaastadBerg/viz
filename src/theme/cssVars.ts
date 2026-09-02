@@ -8,7 +8,12 @@ import type { KtTheme } from "./types";
  */
 export function cssVars(t: KtTheme): Record<string, string> {
   const v: Record<string, string> = {
-    "--kt-bg": t.stage.canvas,
+    /* Stage background. Everything that paints the stage goes through
+     * --kt-bg; hosts (kateter.no course pages) override it by setting
+     * --kt-stage-canvas on any ancestor (e.g. `.kateter-viz-stage
+     * { --kt-stage-canvas: #fff }`) — unset, the theme value applies,
+     * so the gallery/video keep the theme's own canvas. */
+    "--kt-bg": `var(--kt-stage-canvas, ${t.stage.canvas})`,
     "--kt-bg-panel": t.stage.panel,
     "--kt-bg-panel-raised": t.stage.panelRaised,
     "--kt-border": t.stage.border,

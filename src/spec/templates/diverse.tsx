@@ -315,7 +315,7 @@ function HoleMarker({ at }: { at: [number, number] }) {
       cx={px}
       cy={py}
       r={5.5}
-      fill={t.stage.canvas}
+      fill="var(--kt-bg)"
       stroke={t.accents.object.stroke}
       strokeWidth={2.5}
     />
