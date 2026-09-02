@@ -284,6 +284,7 @@ export function KSlider({
         max={max}
         step={step}
         value={value}
+        style={{ "--kviz-fill": `${((value - min) / (max - min)) * 100}%` } as CSSProperties}
         onChange={(e) => onChange(parseFloat(e.target.value))}
       />
       <output htmlFor={id}>{fmt(value, digits)}</output>

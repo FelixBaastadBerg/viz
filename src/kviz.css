@@ -185,14 +185,18 @@
 input[type="range"].kviz-slider {
   -webkit-appearance: none;
   appearance: none;
-  /* content-box regardless of host resets: 4px track + padded hit area
+  /* content-box regardless of host resets: 6px track + padded hit area
      (border-box would collapse the track to zero height) */
   box-sizing: content-box;
-  width: 200px;
-  height: 4px;
-  border-radius: 2px;
-  /* track derived from the axis token — gridDots is too faint on bare paper */
-  background: color-mix(in srgb, var(--kt-axis) 45%, var(--kt-bg));
+  /* S1 (Felix 2026-09-02): wide Brilliant-scale track with filled progress */
+  width: min(360px, 60vw);
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    var(--kt-touch) var(--kviz-fill, 0%),
+    color-mix(in srgb, var(--kt-axis) 40%, var(--kt-bg)) var(--kviz-fill, 0%)
+  );
   outline: none;
   cursor: pointer;
   /* ≥24px effective touch target via padded hit area */
@@ -202,8 +206,8 @@ input[type="range"].kviz-slider {
 input[type="range"].kviz-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   background: var(--kt-touch);
   border: 2px solid var(--kt-bg);
@@ -214,8 +218,8 @@ input[type="range"].kviz-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
 }
 input[type="range"].kviz-slider::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--kt-touch);
   border: 2px solid var(--kt-bg);
