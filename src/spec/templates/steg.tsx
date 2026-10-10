@@ -5,7 +5,7 @@
  * Begge er deterministiske: hele forløpet er forhåndsberegnet, stegindeksen
  * er eneste state — Tilbake/Nullstill er derfor eksakte.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Line as MafsLine } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KPoint, KLabel, curveLabelPos } from "../../2d/primitives";
@@ -13,6 +13,7 @@ import { KFormula, KReadout, KFig, KLegend } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import { registerTemplate } from "../registry";
 import { fn1 } from "../expr";
+import { emitQuizEvent } from "../../quiz/events";
 
 type P = Record<string, unknown>;
 
@@ -220,6 +221,215 @@ registerTemplate({
     params: { matrise: [1, 1, 3, 1, -1, 1], kolonner: 3 },
   },
   render: (params) => <GaussSteg params={params} />,
+});
+
+/* ================================================================== lu-steg */
+
+/** Plain-text number for the hand-drawn (video) style: "−1", "3/2", "¼". */
+const VULGAR: Record<string, string> = { "1/2": "½", "1/3": "⅓", "2/3": "⅔", "1/4": "¼", "3/4": "¾" };
+function fTxt(a: Frac): string {
+  const sign = a.n < 0 ? "−" : "";
+  const n = Math.abs(a.n);
+  if (a.d === 1) return sign + n;
+  return sign + (VULGAR[`${n}/${a.d}`] ?? `${n}/${a.d}`);
+}
+const SUBS = "₀₁₂₃₄₅₆₇₈₉";
+const sub = (k: number) => String(k).split("").map((c) => SUBS[+c]).join("");
+
+interface LuStep {
+  k: number; // pivot column/row
+  i: number; // row being eliminated
+  l: Frac; // multiplier l_ik
+  under: Frac; // the entry that was removed (before the step)
+  pivot: Frac;
+  after: Frac[][];
+}
+
+/** Doolittle LU without row exchanges, one step per eliminated row. */
+function luSteps(m0: Frac[][]): { steps: LuStep[]; error?: string } {
+  const n = m0.length;
+  const u = m0.map((r) => r.slice());
+  const steps: LuStep[] = [];
+  for (let k = 0; k < n - 1; k++) {
+    if (fIsZero(u[k][k]))
+      return { steps, error: `Pivoten i rad ${k + 1} ble 0, så her trengs et radbytte (PM = LU).` };
+    for (let i = k + 1; i < n; i++) {
+      const under = u[i][k];
+      const l = fDiv(under, u[k][k]);
+      for (let c = 0; c < n; c++) u[i][c] = fSub(u[i][c], fMul(l, u[k][c]));
+      steps.push({ k, i, l, under, pivot: u[k][k], after: u.map((r) => r.slice()) });
+    }
+  }
+  return { steps };
+}
+
+/**
+ * LU-maskinen i videostil (STANDARDS W15): håndskrift, runde parenteser,
+ * pivot i oransje ring, multiplikatorene samles på en «kvittering» og i L
+ * (oransje), arbeidskopien blir U (blå). Emitterer quiz:correct når siste
+ * steg er nådd, slik at verten kan krysse av «widget» i fremdriften.
+ */
+function LuSteg({ params }: { params: P }) {
+  const t = useKtTheme();
+  const flat = params.matrise as number[];
+  const navn = (params.navn as string) || "M";
+  const quizId = (params.quizId as string) || "lu-steg";
+  const data = useMemo(() => {
+    const n = Math.round(Math.sqrt(flat.length));
+    if (n < 2 || n > 4 || n * n !== flat.length) return null;
+    const m0: Frac[][] = [];
+    for (let r = 0; r < n; r++) m0.push(flat.slice(r * n, (r + 1) * n).map(fromNumber));
+    return { n, m0, ...luSteps(m0) };
+  }, [flat]);
+  const [idx, setIdx] = useState(0);
+  const total = data ? data.steps.length : 0;
+  const finished = !!data && !data.error && total > 0 && idx >= total;
+
+  useEffect(() => {
+    if (finished) emitQuizEvent({ type: "quiz:correct", quizId, attempts: 1, at: Date.now() });
+  }, [finished, quizId]);
+
+  if (!data) {
+    return (
+      <div className="kviz-widget" style={{ padding: 24, color: "var(--kt-wrong-ink)" }}>
+        Ugyldig matrise: «matrise» må være kvadratisk (2×2 til 4×4), skrevet radvis.
+      </div>
+    );
+  }
+  const { n, m0, steps, error } = data;
+  const cur = idx === 0 ? m0 : steps[idx - 1].after;
+  const last = idx > 0 ? steps[idx - 1] : null;
+  const next = idx < total ? steps[idx] : null;
+
+  const orange = t.accents.touch.ink;
+  const blue = t.accents.object.ink;
+  const purple = t.accents.alt2.ink;
+
+  // which multipliers are known in L so far
+  const known = new Map<string, Frac>();
+  steps.slice(0, idx).forEach((s) => known.set(`${s.i},${s.k}`, s.l));
+
+  const pivotRC = next ? next.k : last ? last.k : -1;
+  const cells: { v: string; cls: string; color?: string }[] = [];
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++) {
+      let cls = "lu-c";
+      let color: string | undefined;
+      if (finished) {
+        if (c >= r) color = blue;
+      } else {
+        if (r === pivotRC && c === pivotRC) cls += " lu-piv";
+        if (last && r === last.i) cls += " lu-new";
+        if (next && r === next.i && c === next.k && !(last && r === last.i)) cls += " lu-tgt";
+      }
+      cells.push({ v: fTxt(cur[r][c]), cls, color });
+    }
+  const lcells: { v: string; cls: string; color?: string }[] = [];
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++) {
+      if (r === c) lcells.push({ v: "1", cls: "lu-c" });
+      else if (c > r) lcells.push({ v: "0", cls: "lu-c" });
+      else {
+        const f = known.get(`${r},${c}`);
+        const isNew = !!last && last.i === r && last.k === c;
+        lcells.push(f ? { v: fTxt(f), cls: isNew ? "lu-c lu-new" : "lu-c", color: orange } : { v: "?", cls: "lu-c lu-ghost" });
+      }
+    }
+
+  const label = idx === 0 ? navn : finished ? "U" : "arbeidskopi";
+  let status: string;
+  if (error && idx >= total) status = error;
+  else if (idx === 0)
+    status = next
+      ? `Pivoten er ${fTxt(m0[0][0])} (oransje ring). Tallene under den skal bli 0. Trykk «Neste steg».`
+      : "Matrisen er allerede øvre triangulær.";
+  else if (finished) status = "Ferdig! Arbeidskopien er blitt U, og L har alle multiplikatorene.";
+  else {
+    const s = last!;
+    status = `l${sub(s.i + 1)}${sub(s.k + 1)} = ${fTxt(s.under)} ÷ ${fTxt(s.pivot)} = ${fTxt(s.l)}. Rad ${s.i + 1} minus (${fTxt(s.l)}) ganger rad ${s.k + 1} gir 0 under pivoten.`;
+    if (next && next.k !== s.k) status += ` Ny pivot: ${fTxt(cur[next.k][next.k])}.`;
+  }
+
+  const mx = (cs: typeof cells, aria: string) => (
+    <span className="lu-mx" role="img" aria-label={aria} style={{ gridTemplateColumns: `repeat(${n}, minmax(1.6em, auto))` }}>
+      {cs.map((c, i) => (
+        <span key={i} className={c.cls} style={c.color ? { color: c.color } : undefined}>{c.v}</span>
+      ))}
+    </span>
+  );
+
+  return (
+    <div className="kviz-widget kviz-lu">
+      <div className="lu-stage">
+        <div className="lu-blk">
+          <span className="lu-lab" style={finished ? { color: blue } : undefined}>{label}</span>
+          {mx(cells, `${label}, steg ${idx} av ${total}`)}
+          <span className="lu-mul">
+            {last && !finished ? (
+              <>
+                l{sub(last.i + 1)}{sub(last.k + 1)} = <span className="lu-ring" style={{ borderColor: t.accents.touch.stroke, color: orange }}>{fTxt(last.l)}</span>
+              </>
+            ) : null}
+          </span>
+        </div>
+        <div className="lu-rc" aria-label="Kvittering over radoperasjonene">
+          <div className="lu-rc-h">kvittering</div>
+          {idx === 0 ? <p className="lu-empty">tom ennå</p> : null}
+          {steps.slice(0, idx).map((s, j) => (
+            <div key={j} className="lu-op">
+              R{sub(s.i + 1)} − (<span style={{ color: orange }}>{fTxt(s.l)}</span>) · R{sub(s.k + 1)}
+            </div>
+          ))}
+          <svg className="lu-zig" viewBox="0 0 260 11" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 0 L0 5.5 L10 11 L20 5.5 L30 11 L40 5.5 L50 11 L60 5.5 L70 11 L80 5.5 L90 11 L100 5.5 L110 11 L120 5.5 L130 11 L140 5.5 L150 11 L160 5.5 L170 11 L180 5.5 L190 11 L200 5.5 L210 11 L220 5.5 L230 11 L240 5.5 L250 11 L260 5.5 L260 0" fill="var(--kt-bg-panel)" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+          </svg>
+        </div>
+        <div className="lu-blk">
+          <span className="lu-lab" style={{ color: orange }}>L</span>
+          {mx(lcells, "L")}
+          <span className="lu-mul" />
+        </div>
+      </div>
+      <p className="lu-rule" style={{ color: purple }}>multiplikator = tallet under ÷ pivot</p>
+      <div className="kviz-widget-controls lu-ctrl">
+        <button className="kviz-btn lu-pill" disabled={idx === 0} onClick={() => setIdx((i) => Math.max(0, i - 1))}>← Forrige</button>
+        <button className="kviz-btn kviz-btn--primary lu-pill lu-main" disabled={idx >= total} onClick={() => setIdx((i) => Math.min(total, i + 1))}>Neste steg →</button>
+        <button className="kviz-btn lu-pill" disabled={idx === 0} onClick={() => setIdx(0)}>Nullstill</button>
+      </div>
+      <p className="lu-status" aria-live="polite">{status}</p>
+      <p className="lu-steps">steg {Math.min(idx, total)} av {total}</p>
+    </div>
+  );
+}
+
+registerTemplate({
+  id: "lu-steg",
+  description:
+    "LU-faktorisering steg for steg i videostil: arbeidskopien elimineres rad for rad med pivot i oransje ring, hver multiplikator skrives på en «kvittering» og inn i L (oransje), til arbeidskopien er blitt U (blå). Uten radbytter (Doolittle); widgeten regner alt selv med eksakte brøker. Emitterer quiz:correct når siste steg er nådd.",
+  curriculum: ["universitet"],
+  params: {
+    matrise: {
+      type: { kind: "numbers" },
+      required: true,
+      doc: "kvadratisk matrise (2×2 til 4×4) som flat radmajor-liste, f.eks. [[1,2],[3,4]] skrives [1, 2, 3, 4]. Velg en matrise som ikke trenger radbytter.",
+    },
+    navn: {
+      type: { kind: "string" },
+      default: "M",
+      doc: "navnet på matrisen slik den heter i videoen/teksten (vises før første steg)",
+    },
+    quizId: {
+      type: { kind: "string" },
+      default: "lu-steg",
+      doc: "id i quiz:correct-hendelsen som sendes når faktoriseringen er ferdig (verten krysser av «widget»)",
+    },
+  },
+  example: {
+    template: "lu-steg",
+    title: "LU-maskinen",
+    params: { matrise: [1, 2, -1, -1, 0, -2, -2, -2, -2], navn: "M" },
+  },
+  render: (params) => <LuSteg params={params} />,
 });
 
 /* ============================================================ fikspunkt-steg */

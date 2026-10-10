@@ -115,5 +115,6 @@
   },
   "fill": {
     "areaOpacity": 0.16
-  }
+  },
+  "highlight": "#F2D13A"
 }

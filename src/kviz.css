@@ -419,3 +419,31 @@ input[type="range"].kviz-slider--lead::-webkit-slider-thumb {
   margin-left: auto;
   margin-right: auto;
 }
+
+/* -------------------------------------------------- lu-steg (videostil, W15) */
+.kviz-lu { --lu-hand: "Patrick Hand", "Caveat", "Bradley Hand", cursive; text-align: center; }
+.kviz-lu .lu-stage { display: flex; justify-content: center; align-items: center; gap: 40px; flex-wrap: wrap; padding: 22px 0 6px; }
+.kviz-lu .lu-blk { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.kviz-lu .lu-lab { font-family: var(--lu-hand); font-size: 24px; color: var(--kt-text-muted); line-height: 1; }
+.kviz-lu .lu-mx { position: relative; display: inline-grid; gap: 4px 10px; padding: 6px 18px; font-family: var(--lu-hand); font-size: 32px; line-height: 1.3; color: var(--kt-text); font-variant-numeric: tabular-nums; }
+.kviz-lu .lu-mx::before, .kviz-lu .lu-mx::after { content: ""; position: absolute; top: 2px; bottom: 2px; width: 12px; border: 2px solid var(--kt-text); }
+.kviz-lu .lu-mx::before { left: 0; border-right: 0; border-top-color: transparent; border-bottom-color: transparent; border-radius: 100% 0 0 100% / 50% 0 0 50%; }
+.kviz-lu .lu-mx::after { right: 0; border-left: 0; border-top-color: transparent; border-bottom-color: transparent; border-radius: 0 100% 100% 0 / 0 50% 50% 0; }
+.kviz-lu .lu-c { padding: 0 6px; border-radius: 8px; transition: background var(--kt-dur-fade), color var(--kt-dur-fade); }
+.kviz-lu .lu-piv { box-shadow: 0 0 0 2.5px var(--kt-touch); border-radius: 50%; }
+.kviz-lu .lu-new { background: color-mix(in srgb, #F2D13A 38%, transparent); }
+.kviz-lu .lu-tgt { background: color-mix(in srgb, var(--kt-touch) 16%, transparent); }
+.kviz-lu .lu-ghost { color: color-mix(in srgb, var(--kt-text-muted) 45%, transparent); }
+.kviz-lu .lu-mul { min-height: 34px; font-family: var(--lu-hand); font-size: 22px; color: var(--kt-text-muted); }
+.kviz-lu .lu-ring { display: inline-grid; place-items: center; min-width: 40px; height: 32px; padding: 0 6px; border: 2.5px solid; border-radius: 50%; }
+.kviz-lu .lu-rc { position: relative; width: 240px; min-height: 160px; background: var(--kt-bg-panel); border: 1.5px solid var(--kt-text); border-bottom: 0; padding: 10px 16px 12px; font-family: var(--lu-hand); font-size: 22px; line-height: 1.45; text-align: left; transform: rotate(0.6deg); margin-bottom: 11px; color: var(--kt-text); }
+.kviz-lu .lu-rc-h { text-align: center; font-size: 23px; color: var(--kt-text-muted); }
+.kviz-lu .lu-empty { margin: 18px 0 0; text-align: center; font-size: 18px; color: var(--kt-text-muted); opacity: 0.7; }
+.kviz-lu .lu-op { white-space: nowrap; }
+.kviz-lu .lu-zig { position: absolute; left: -1.5px; bottom: -11px; width: calc(100% + 3px); height: 11px; color: var(--kt-text); }
+.kviz-lu .lu-rule { font-family: var(--lu-hand); font-size: 22px; margin: 4px 0 0; }
+.kviz-lu .lu-ctrl { justify-content: center; gap: 8px; border-top: 1px solid var(--kt-border); margin-top: 12px; padding-top: 12px; flex-wrap: wrap; }
+.kviz-lu .lu-pill { border-radius: 999px; font-weight: 600; }
+.kviz-lu .lu-main { background: var(--kt-touch-ink); border-color: var(--kt-touch-ink); color: #fff; }
+.kviz-lu .lu-status { margin: 10px auto 0; max-width: 60ch; min-height: 1.6em; font-size: 15px; color: var(--kt-text); }
+.kviz-lu .lu-steps { margin: 2px 0 0; font-size: 12px; color: var(--kt-text-muted); }
