@@ -447,3 +447,15 @@ input[type="range"].kviz-slider--lead::-webkit-slider-thumb {
 .kviz-lu .lu-main { background: var(--kt-touch-ink); border-color: var(--kt-touch-ink); color: #fff; }
 .kviz-lu .lu-status { margin: 10px auto 0; max-width: 60ch; min-height: 1.6em; font-size: 15px; color: var(--kt-text); }
 .kviz-lu .lu-steps { margin: 2px 0 0; font-size: 12px; color: var(--kt-text-muted); }
+
+/* -------------------------------------------------- dijkstra-graf (videostil, W15) */
+.kviz-dij { --lu-hand: "Patrick Hand", "Caveat", "Bradley Hand", cursive; text-align: center; }
+.kviz-dij svg text { font-family: var(--lu-hand); }
+.kviz-dij .dij-n { font-size: 21px; fill: var(--kt-text); }
+.kviz-dij .dij-w { font-size: 17px; fill: var(--kt-text-muted); }
+.kviz-dij .dij-d { font-size: 19px; }
+.kviz-dij .lu-ctrl { justify-content: center; gap: 8px; border-top: 1px solid var(--kt-border); margin-top: 12px; padding-top: 12px; flex-wrap: wrap; }
+.kviz-dij .lu-pill { border-radius: 999px; font-weight: 600; }
+.kviz-dij .lu-main { background: var(--kt-touch-ink); border-color: var(--kt-touch-ink); color: #fff; }
+.kviz-dij .lu-status { margin: 10px auto 0; max-width: 60ch; min-height: 1.6em; font-size: 15px; color: var(--kt-text); }
+.kviz-dij .lu-steps { margin: 2px 0 0; font-size: 12px; color: var(--kt-text-muted); }

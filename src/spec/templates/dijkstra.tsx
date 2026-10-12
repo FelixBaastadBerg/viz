@@ -2,9 +2,9 @@
  *
  * The play-with-it companion to the dijkstra video: SAME graph, SAME colours
  * (blue graph, orange current node/fresh update, green finished + final path).
- * Chrome per W1–W5: intro with KaTeX above, one font, a status line under the
- * figure narrating each step (the pedagogical readout — not a control twin),
- * step buttons at Brilliant scale.
+ * Video style (W15, Felix 2026-10-12: the old Poppins/thin-circle look «liker jeg ikke»): pen-weight edges with
+ * a faint bow, hand-drawn white paper nodes with a dark edge, Patrick Hand labels, an orange hand-drawn ring
+ * on the node being processed, and the lu-steg controls + plain-words status line under the figure.
  *
  * The widget is deterministic: the full event log is precomputed, the step
  * index is the only state, so Tilbake is exact.
@@ -45,7 +45,7 @@ interface Step {
 }
 
 const INF = Infinity;
-const fmtD = (d: number) => (d === INF ? "\\infty" : String(d));
+const fmtD = (d: number) => (d === INF ? "∞" : String(d));
 
 function neighbours(u: string): [string, string, number][] {
   const out: [string, string, number][] = [];
@@ -72,7 +72,7 @@ function runDijkstra(source: string, target: string) {
     if (u === null) break;
     steps.push({
       kind: "select", u,
-      status: `**Steg 1:** nærmeste uferdige node er $${u}$, med $\\mathrm{dist}(${u}) = ${dist[u]}$.`,
+      status: `Nærmeste uferdige node er ${u}, med dist(${u}) = ${dist[u]}.`,
     });
     for (const [v, , w] of neighbours(u)) {
       if (done.has(v)) continue;
@@ -83,23 +83,23 @@ function runDijkstra(source: string, target: string) {
         kind: "relax", u, v, w, cand, old,
         status: improved
           ? old === INF
-            ? `**Steg 2:** relaksérer $${u}$–$${v}$: $${dist[u]} + ${w} = ${cand}$ — første vei til $${v}$.`
-            : `**Steg 2:** relaksérer $${u}$–$${v}$: $${dist[u]} + ${w} = ${cand} < ${old}$ — bedre vei, oppdaterer!`
-          : `**Steg 2:** relaksérer $${u}$–$${v}$: $${dist[u]} + ${w} = ${cand} \\geq ${fmtD(old)}$ — ikke bedre, beholder.`,
+            ? `Kanten ${u}–${v}: ${dist[u]} + ${w} = ${cand}. Første vei til ${v}.`
+            : `Kanten ${u}–${v}: ${dist[u]} + ${w} = ${cand} < ${old}. Bedre vei, oppdaterer.`
+          : `Kanten ${u}–${v}: ${dist[u]} + ${w} = ${cand} ≥ ${fmtD(old)}. Ikke bedre, beholder.`,
       });
       if (improved) { dist[v] = cand; prev[v] = u; }
     }
     done.add(u);
     steps.push({
       kind: "finish", u,
-      status: `$${u}$ er ferdig — $\\mathrm{dist}(${u}) = ${dist[u]}$ kan aldri bli bedre.`,
+      status: `${u} er ferdig: dist(${u}) = ${dist[u]} kan aldri bli bedre.`,
     });
   }
   const path: string[] = [];
   for (let n: string | null = target; n; n = prev[n]) path.unshift(n);
   steps.push({
     kind: "done",
-    status: `**Ferdig!** Korteste vei ${path.join("–")} har lengde $${dist[target]}$.`,
+    status: `Ferdig! Korteste vei ${path.join("–")} har lengde ${dist[target]}.`,
   });
   return { steps, path };
 }
@@ -135,7 +135,7 @@ function DijkstraGraf({ params }: { params: P }) {
   }, [idx, steps, source]);
 
   const status = idx === 0
-    ? `Start: $\\mathrm{dist}(${source}) = 0$, alle andre $\\infty$. Trykk **Neste steg**.`
+    ? `Start: dist(${source}) = 0, alle andre ∞. Trykk «Neste steg».`
     : steps[idx - 1].status;
 
   const pathEdges = new Set(
@@ -151,12 +151,12 @@ function DijkstraGraf({ params }: { params: P }) {
   const px = ([x, y]: [number, number]) => [x * S, y * S];
 
   return (
-    <div className="kviz-widget">
+    <div className="kviz-widget kviz-dij">
       {params.intro ? (
         <p className="kviz-intro"><KMixed text={params.intro as string} /></p>
       ) : null}
 
-      <svg viewBox="-235 -128 470 268" style={{ width: "100%", display: "block" }}
+      <svg viewBox="-235 -132 470 276" style={{ width: "100%", display: "block" }}
         role="img" aria-label="graf for Dijkstras algoritme">
         {EDGES.map(([a, b, w]) => {
           const key = a + b;
@@ -167,16 +167,18 @@ function DijkstraGraf({ params }: { params: P }) {
           const nx = -dy / len, ny = dx / len;
           const onPath = state.isDone && pathEdges.has(key);
           const hot = state.hotEdge === key;
+          // a pen line: never ruler-straight — a faint bow, the same every render
+          const bow = (seed(key) - 0.5) * 3.2;
+          const d = `M ${x1} ${y1} Q ${(x1 + x2) / 2 + nx * bow} ${(y1 + y2) / 2 + ny * bow} ${x2} ${y2}`;
           return (
             <g key={key}>
-              <line x1={x1} y1={y1} x2={x2} y2={y2}
+              <path d={d} fill="none"
                 stroke={onPath ? right.stroke : hot ? touch.stroke : obj.stroke}
-                strokeWidth={onPath ? 4.5 : hot ? 4 : 2}
+                strokeWidth={onPath ? 5 : hot ? 4.6 : 2.8}
                 strokeLinecap="round" />
-              <text x={(x1 + x2) / 2 + nx * WSIDE[key] * 15}
-                y={(y1 + y2) / 2 + ny * WSIDE[key] * 15}
-                fill={t.text.muted} fontSize="13" textAnchor="middle"
-                dominantBaseline="middle">{w}</text>
+              <text className="dij-w" x={(x1 + x2) / 2 + nx * WSIDE[key] * 16}
+                y={(y1 + y2) / 2 + ny * WSIDE[key] * 16}
+                textAnchor="middle" dominantBaseline="middle">{w}</text>
             </g>
           );
         })}
@@ -184,47 +186,70 @@ function DijkstraGraf({ params }: { params: P }) {
           const [x, y] = px(pos);
           const fin = state.finished.has(name);
           const cur = state.current === name;
-          const d = state.dist[name];
+          const dv = state.dist[name];
           const distColor = fin ? right.ink
             : state.hotNode === name ? touch.ink : t.text.muted;
           return (
             <g key={name}>
+              {/* a white paper token with a dark pen edge (V45) */}
+              <path d={handCircle(x, y, R, name)}
+                fill={fin ? `color-mix(in srgb, ${right.stroke} 16%, #fff)` : "#fff"}
+                stroke={fin ? right.stroke : "var(--kt-text)"} strokeWidth={2.4} strokeLinecap="round" />
               {cur && (
-                <circle cx={x} cy={y} r={R + 6} fill="none"
-                  stroke={touch.stroke} strokeWidth={3.5} />
+                <path d={handCircle(x, y, R + 7, name + "ring")} fill="none"
+                  stroke={touch.stroke} strokeWidth={3.4} strokeLinecap="round" />
               )}
-              <circle cx={x} cy={y} r={R} fill="var(--kt-bg)"
-                stroke={fin ? right.stroke : obj.stroke} strokeWidth={2.4} />
-              {fin && (
-                <circle cx={x} cy={y} r={R} fill={right.stroke} fillOpacity={0.14} />
-              )}
-              <text x={x} y={y + 1} fill={t.text.primary} fontSize="15"
-                fontWeight={600} textAnchor="middle"
-                dominantBaseline="middle">{name}</text>
-              <text x={x + DOFF[name][0]} y={y + DOFF[name][1]} fill={distColor}
-                fontSize="13" fontWeight={600} textAnchor="middle">
-                {d === INF ? "∞" : d}
+              <text className="dij-n" x={x} y={y + 1.5}
+                textAnchor="middle" dominantBaseline="middle">{name}</text>
+              <text className="dij-d" x={x + DOFF[name][0]} y={y + DOFF[name][1] + (DOFF[name][1] > 0 ? 2 : -1)}
+                fill={distColor} textAnchor="middle">
+                {dv === INF ? "∞" : dv}
               </text>
             </g>
           );
         })}
       </svg>
 
-      <p className="kviz-intro kviz-status" style={{ minHeight: "2.6em", marginTop: 4 }}>
-        <KMixed text={status.replace(/\*\*(.*?)\*\*/g, "$1")} />
-      </p>
-
-      <div className="kviz-widget-controls" style={{ justifyContent: "center", gap: 10 }}>
-        <button className="kviz-btn" disabled={idx === 0}
-          onClick={() => setIdx((i) => Math.max(0, i - 1))}>← Tilbake</button>
-        <button className="kviz-btn kviz-btn--primary" disabled={idx >= steps.length}
-          onClick={() => setIdx((i) => Math.min(steps.length, i + 1))}>
-          Neste steg →</button>
-        <button className="kviz-btn" disabled={idx === 0}
+      <div className="kviz-widget-controls lu-ctrl">
+        <button className="kviz-btn lu-pill" disabled={idx === 0}
+          onClick={() => setIdx((i) => Math.max(0, i - 1))}>← Forrige</button>
+        <button className="kviz-btn kviz-btn--primary lu-pill lu-main" disabled={idx >= steps.length}
+          onClick={() => setIdx((i) => Math.min(steps.length, i + 1))}>Neste steg →</button>
+        <button className="kviz-btn lu-pill" disabled={idx === 0}
           onClick={() => setIdx(0)}>Nullstill</button>
       </div>
+      <p className="lu-status" aria-live="polite">{status}</p>
+      <p className="lu-steps">steg {Math.min(idx, steps.length)} av {steps.length}</p>
     </div>
   );
+}
+
+/** A deterministic 0..1 from a string (the same wobble every render). */
+function seed(k: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < k.length; i++) h = Math.imul(h ^ k.charCodeAt(i), 16777619);
+  return ((h >>> 0) % 10000) / 10000;
+}
+
+/** A hand-drawn circle: a faint wobble in the radius and a small overshoot where the pen closes it. */
+function handCircle(cx: number, cy: number, r: number, key: string): string {
+  const s0 = seed(key) * Math.PI * 2;
+  const n = 26;
+  const pts: [number, number][] = [];
+  for (let i = 0; i <= n + 2; i++) {
+    const a = s0 + (i / n) * Math.PI * 2;
+    const rr = r * (1 + 0.012 * Math.sin(3 * a + s0) + 0.006 * Math.sin(5 * a)) + (i > n ? 0.9 : 0);
+    pts.push([cx + rr * Math.cos(a), cy + rr * Math.sin(a)]);
+  }
+  // Catmull-Rom → cubic Bézier
+  let d = `M ${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C ${c1[0].toFixed(2)} ${c1[1].toFixed(2)} ${c2[0].toFixed(2)} ${c2[1].toFixed(2)} ${p2[0].toFixed(2)} ${p2[1].toFixed(2)}`;
+  }
+  return d;
 }
 
 registerTemplate({
