@@ -201,10 +201,14 @@ function DijkstraGraf({ params }: { params: P }) {
               )}
               <text className="dij-n" x={x} y={y + 1.5}
                 textAnchor="middle" dominantBaseline="middle">{name}</text>
-              <text className="dij-d" x={x + DOFF[name][0]} y={y + DOFF[name][1] + (DOFF[name][1] > 0 ? 2 : -1)}
-                fill={distColor} textAnchor="middle">
-                {dv === INF ? "∞" : dv}
-              </text>
+              {dv === INF ? (
+                // Patrick Hand has no ∞: draw it with the pen instead of falling back to a machine font
+                <path d={infinity(x + DOFF[name][0], y + DOFF[name][1] + (DOFF[name][1] > 0 ? 2 : -1) - 6.5, 8.5)}
+                  fill="none" stroke={distColor} strokeWidth={1.9} strokeLinecap="round" strokeLinejoin="round" />
+              ) : (
+                <text className="dij-d" x={x + DOFF[name][0]} y={y + DOFF[name][1] + (DOFF[name][1] > 0 ? 2 : -1)}
+                  fill={distColor} textAnchor="middle">{dv}</text>
+              )}
             </g>
           );
         })}
@@ -229,6 +233,20 @@ function seed(k: string): number {
   let h = 2166136261;
   for (let i = 0; i < k.length; i++) h = Math.imul(h ^ k.charCodeAt(i), 16777619);
   return ((h >>> 0) % 10000) / 10000;
+}
+
+/** ∞ as a pen stroke: a lemniscate of half-width a centred at (cx, cy). */
+function infinity(cx: number, cy: number, a: number): string {
+  const n = 40;
+  let d = "";
+  for (let i = 0; i <= n; i++) {
+    const t = (i / n) * Math.PI * 2;
+    const k = 1 + Math.sin(t) ** 2;
+    const x = cx + (a * Math.cos(t)) / k;
+    const y = cy + (a * 1.15 * Math.sin(t) * Math.cos(t)) / k;
+    d += `${i ? " L" : "M"} ${x.toFixed(2)} ${y.toFixed(2)}`;
+  }
+  return d;
 }
 
 /** A hand-drawn circle: a faint wobble in the radius and a small overshoot where the pen closes it. */
