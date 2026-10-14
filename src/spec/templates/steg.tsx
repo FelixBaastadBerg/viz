@@ -341,7 +341,7 @@ function LuSteg({ params }: { params: P }) {
   if (error && idx >= total) status = error;
   else if (idx === 0)
     status = next
-      ? `Pivoten er ${fTxt(m0[0][0])} (oransje ring). Tallene under den skal bli 0. Trykk «Neste steg».`
+      ? `Pivoten er ${fTxt(m0[0][0])} (i ringen). Tallene under den skal bli 0. Trykk «Neste steg».`
       : "Matrisen er allerede øvre triangulær.";
   else if (finished) status = "Ferdig! Arbeidskopien er blitt U, og L har alle multiplikatorene.";
   else {

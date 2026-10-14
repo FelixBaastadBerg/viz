@@ -1,6 +1,6 @@
 /** Templates: graphical equations, 3D volume. */
 import { useState } from "react";
-import { useTransformContext, vec } from "mafs";
+import { usePaneContext, useTransformContext, vec } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KCurve, KPoint, KLabel, KVector, curveLabelPos } from "../../2d/primitives";
 import type { KtRole } from "../../theme/types";
@@ -37,11 +37,14 @@ function HandNote({
   const M = vec.matrixMult(ctx.viewTransform, ctx.userTransform);
   const [x1, y1] = vec.transform(tail, M);
   const [x2, y2] = vec.transform(tip, M);
+  const { xPaneRange } = usePaneContext();
   // W10 + Felix 2026-09-01: arrow AND text in the alt2 accent (the same
   // purple as the marked point) — stroke for the arrow, ink for the text
   // (arv: #8757C8 / #6E41AC, both clearly purple and legible on paper).
-  const col = t.accents.alt2.stroke;
-  const ink = t.accents.alt2.ink;
+  const note = t.annotation;
+  const col = note ? note.color : t.accents.alt2.stroke;
+  const ink = note ? note.color : t.accents.alt2.ink;
+  const slim = note?.arrow === "slim";
   // curved shaft: control point pushed perpendicular for a lazy hand arc
   const mx = (x1 + x2) / 2 - (y2 - y1) * 0.22;
   const my = (y1 + y2) / 2 + (x2 - x1) * 0.22;
@@ -55,31 +58,51 @@ function HandNote({
       {/* inline style stroke, not the attribute: mafs' `.MafsView path`
           rule would otherwise repaint the arrow in --mafs-fg (near-black) */}
       <path
-        d={`M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`}
+        d={`M ${x1} ${y1} Q ${mx} ${my} ${slim ? x2 - 7 * Math.cos(ang) : x2} ${slim ? y2 - 7 * Math.sin(ang) : y2}`}
         fill="none"
         style={{ stroke: col }}
-        strokeWidth={2.4}
+        strokeWidth={slim ? 1.6 : 2.4}
         strokeLinecap="round"
       />
-      <path
-        d={`M ${x2 + hl * Math.cos(a1)} ${y2 + hl * Math.sin(a1)} L ${x2} ${y2} L ${x2 + hl * Math.cos(a2)} ${y2 + hl * Math.sin(a2)}`}
-        fill="none"
-        style={{ stroke: col }}
-        strokeWidth={2.4}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      {slim ? (
+        // V54: an even line and a small filled head
+        <path
+          d={`M ${x2} ${y2} L ${x2 + 9 * Math.cos(ang + Math.PI - 0.38)} ${y2 + 9 * Math.sin(ang + Math.PI - 0.38)} L ${x2 + 9 * Math.cos(ang + Math.PI + 0.38)} ${y2 + 9 * Math.sin(ang + Math.PI + 0.38)} Z`}
+          style={{ fill: col, stroke: col }}
+          strokeWidth={1}
+          strokeLinejoin="round"
+        />
+      ) : (
+        <path
+          d={`M ${x2 + hl * Math.cos(a1)} ${y2 + hl * Math.sin(a1)} L ${x2} ${y2} L ${x2 + hl * Math.cos(a2)} ${y2 + hl * Math.sin(a2)}`}
+          fill="none"
+          style={{ stroke: col }}
+          strokeWidth={2.4}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
       <text
-        x={x1 + (anchor === "start" ? 6 : -6)}
+        x={(() => {
+          // keep the note inside the plot: estimate its width and slide it in from the edge
+          const size = note?.size ?? 21;
+          const w = text.length * size * 0.48;
+          const left = vec.transform([xPaneRange[0], 0], M)[0] + 8;
+          const right = vec.transform([xPaneRange[1], 0], M)[0] - 8;
+          const x = x1 + (anchor === "start" ? 6 : -6);
+          if (anchor === "start") return Math.max(left, Math.min(x, right - w));
+          return Math.min(right, Math.max(x, left + w));
+        })()}
         y={y1 - 8}
         textAnchor={anchor}
         style={{
           // inline style, not the fill attribute: mafs' `.MafsView text`
           // rule would otherwise repaint the text in --mafs-fg (near-black)
           fill: ink,
-          fontFamily: t.typography.display,
-          fontSize: 21,
-          fontWeight: t.typography.displayWeight,
+          fontFamily: note ? note.font : t.typography.display,
+          fontSize: note?.size ?? 21,
+          fontWeight: note ? 400 : t.typography.displayWeight,
+          fontStyle: note?.italic ? "italic" : "normal",
         }}
       >
         {text}
@@ -327,7 +350,16 @@ function DotMarker({ at, role = "object" }: { at: [number, number]; role?: KtRol
   const t = useKtTheme();
   const ctx = useTransformContext();
   const [px, py] = vec.transform(at, vec.matrixMult(ctx.viewTransform, ctx.userTransform));
-  return <circle cx={px} cy={py} r={5} fill={t.accents[role].stroke} />;
+  if (t.structure.axisStyle !== "ruler") return <circle cx={px} cy={py} r={5} fill={t.accents[role].stroke} />;
+  // V53/V54: the answer is orange (lilla is no longer a comment colour — notes are white)
+  const c = t.accents[role === "alt2" ? "touch" : role].stroke;
+  // V54: a point is a dot with a light ring around it (a target)
+  return (
+    <g>
+      <circle cx={px} cy={py} r={t.point.haloRadius} fill="none" style={{ stroke: c }} strokeOpacity={0.55} strokeWidth={1.5} />
+      <circle cx={px} cy={py} r={4.5} style={{ fill: c }} />
+    </g>
+  );
 }
 
 function GrenseUtforsker({ params }: { params: P }) {

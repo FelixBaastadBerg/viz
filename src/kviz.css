@@ -68,6 +68,12 @@
   font-family: var(--kt-font-ui);
 }
 
+/* V54 ruler axes: no grid — the axes carry ruler ticks (KPlot RulerTicks) */
+.kviz-stage[data-kt-axis="ruler"] .MafsView {
+  --mafs-line-color: transparent;
+  --grid-line-subdivision-color: transparent;
+}
+
 /* --------------------------------------------------------------- panels
    W6: panels flow BELOW the figure — never absolutely positioned over it,
    which collided with surrounding text in embedded contexts. */

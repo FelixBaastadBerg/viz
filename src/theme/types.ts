@@ -22,7 +22,14 @@ export interface KtTheme {
     panelBlur: number;
     shadow: string;
   };
-  structure: { grid: string; gridDots: string; axis: string };
+  structure: {
+    grid: string;
+    gridDots: string;
+    axis: string;
+    /** "ruler" = no grid; the axes carry ruler ticks (whole, half, quarter units) — the video
+        identity's set-square axes (STANDARDS V54). Unset/"grid" = the coordinate grid. */
+    axisStyle?: "grid" | "ruler";
+  };
   text: { primary: string; muted: string };
   accents: {
     object: KtAccent;
@@ -55,6 +62,9 @@ export interface KtTheme {
     grid: number;
   };
   point: { radius: number; haloRadius: number; haloOpacity: number };
+  /** The annotation voice (notes with an arrow). Unset = the hand note: alt2 colour, display font,
+      open hand-drawn head. V54: white notes in the video font, slim arrows with a small filled head. */
+  annotation?: { color: string; font: string; italic?: boolean; size?: number; arrow: "hand" | "slim" };
   fill: { areaOpacity: number };
   motion: {
     easeSmooth: string;
