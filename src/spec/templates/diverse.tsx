@@ -26,11 +26,14 @@ function HandNote({
   tail,
   text,
   anchor,
+  xRange,
 }: {
   tip: [number, number];
   tail: [number, number];
   text: string;
   anchor: "start" | "end";
+  /** the plot's visible x-range (the pane range is rounded out, too wide to clamp against) */
+  xRange?: [number, number];
 }) {
   const t = useKtTheme();
   const ctx = useTransformContext();
@@ -86,9 +89,10 @@ function HandNote({
         x={(() => {
           // keep the note inside the plot: estimate its width and slide it in from the edge
           const size = note?.size ?? 21;
-          const w = text.length * size * 0.48;
-          const left = vec.transform([xPaneRange[0], 0], M)[0] + 8;
-          const right = vec.transform([xPaneRange[1], 0], M)[0] - 8;
+          const w = text.length * size * 0.52;
+          const [xa, xb] = xRange ?? (xPaneRange as [number, number]);
+          const left = vec.transform([xa, 0], M)[0] + 8;
+          const right = vec.transform([xb, 0], M)[0] - 8;
           const x = x1 + (anchor === "start" ? 6 : -6);
           if (anchor === "start") return Math.max(left, Math.min(x, right - w));
           return Math.min(right, Math.max(x, left + w));
@@ -224,6 +228,7 @@ function LikningGrafisk({ params, quiz }: { params: P; quiz?: QuizWrapper }) {
                 tail={tail}
                 text={(params.merkelapp as string) || "her passer begge ligningene"}
                 anchor={sx === 1 ? "start" : "end"}
+                xRange={view.x}
               />
             </>
           )}
