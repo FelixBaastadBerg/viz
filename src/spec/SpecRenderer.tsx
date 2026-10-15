@@ -14,6 +14,7 @@ import "./templates/dijkstra";
 import "./templates/steg";
 import "./templates/krefter";
 import "./templates/lumaskin";
+import "./templates/dijkstramaskin";
 
 /**
  * Render a widget spec. Invalid specs render the validation errors instead of

@@ -17,16 +17,16 @@ import { registerTemplate } from "../registry";
 type P = Record<string, unknown>;
 
 /* same graph as video/scenes/dijkstra.py — SVG coords (y down) */
-const NODES: Record<string, [number, number]> = {
+export const NODES: Record<string, [number, number]> = {
   A: [-3.4, 0.0], B: [-1.5, -1.4], C: [-1.2, 1.5],
   D: [0.9, -0.6], E: [1.6, 1.3], F: [3.4, -0.2],
 };
-const EDGES: [string, string, number][] = [
+export const EDGES: [string, string, number][] = [
   ["A", "B", 2], ["A", "C", 5], ["B", "C", 2], ["B", "D", 6],
   ["C", "D", 3], ["C", "E", 6], ["D", "E", 1], ["D", "F", 5], ["E", "F", 2],
 ];
 /* weight-label side, mirroring the video's WSIDE (sign flipped for y-down) */
-const WSIDE: Record<string, number> = {
+export const WSIDE: Record<string, number> = {
   AB: -1, AC: 1, BC: 1, BD: -1, CD: 1, CE: 1, DE: 1, DF: -1, EF: 1,
 };
 /* dist-label offset per node (px) — keeps labels off incoming edges */
@@ -34,7 +34,7 @@ const DOFF: Record<string, [number, number]> = {
   A: [0, -31], B: [0, -31], C: [0, 40], D: [0, -31], E: [0, 40], F: [0, -31],
 };
 
-interface Step {
+export interface Step {
   kind: "select" | "relax" | "finish" | "done";
   u?: string;
   v?: string;
@@ -57,7 +57,7 @@ function neighbours(u: string): [string, string, number][] {
 }
 
 /** Precompute the whole run as narrated steps. */
-function runDijkstra(source: string, target: string) {
+export function runDijkstra(source: string, target: string) {
   const dist: Record<string, number> = {};
   const prev: Record<string, string | null> = {};
   const done = new Set<string>();
