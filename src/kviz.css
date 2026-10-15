@@ -485,6 +485,18 @@ input[type="range"].kviz-slider--lead::-webkit-slider-thumb {
 .kviz-lum .lum-late { animation-delay: 0.45s; }
 .kviz-lum .lum-pop { transform-box: fill-box; transform-origin: center; animation: lum-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) 0.35s both; }
 .kviz-lum .lum-halo { transform-box: fill-box; transform-origin: center; animation: lum-halo 1.8s ease-in-out infinite; }
+.kviz-lum .lum-later { animation-delay: 0.8s; }
+/* the three steps for one number (Felix 2026-10-15: «1. identifiser pivot … 2. Finn multiplikator og sett inn i L 3. trekk fra») */
+.kviz-widget .lum-stepper { gap: 8px 20px; margin: 12px auto 0; min-height: 1.4em; font-family: var(--kt-font-caps, var(--kt-font-ui)); font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--kt-text-muted); }
+.kviz-widget .lum-stepper > span { display: inline-flex; align-items: center; gap: 7px; opacity: 0.5; transition: opacity var(--kt-dur-fade, 200ms), color var(--kt-dur-fade, 200ms); }
+.kviz-widget .lum-stepper > span.is-done { opacity: 0.85; }
+.kviz-widget .lum-stepper > span.is-on { opacity: 1; color: var(--kt-touch-ink); }
+.kviz-widget .lum-stepper .lum-n { display: inline-grid; place-items: center; width: 18px; height: 18px; border: 1.3px solid currentColor; border-radius: 50%; font-size: 10px; letter-spacing: 0; }
+@media (max-width: 480px) {
+  .kviz-widget .lum-stepper { gap: 6px 12px; font-size: 10px; letter-spacing: 0.08em; }
+  .kviz-widget .lum-stepper > span { gap: 5px; }
+  .kviz-widget .lum-stepper .lum-n { width: 16px; height: 16px; font-size: 9px; }
+}
 @keyframes lum-draw { to { stroke-dashoffset: 0; } }
 @keyframes lum-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lum-pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }

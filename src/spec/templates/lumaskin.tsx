@@ -1,12 +1,16 @@
-/** Template: the LU machine in the W17 style (Felix 2026-10-15: «lag LU maskinen med nye settinger … det kan fortsatt
-    være labels og piler og sirkler og andre ting som vi bruker i videoene»). The video's board (LU v7) as a widget:
-    square brackets and NewCM numerals, «PIVOT» in blue with its arrow, the number under it in orange, a pen-drawn
-    orange arrow from the pivot row to the row being cleared with the MULTIPLIKATOR readout beside it (under ÷ pivot,
-    coloured like the matrix), a small orange ring with m beside every new 0, the KVITTERING card that collects the row
-    operations and an arrow down to L, whose orange dots fill with the multipliers. Text is only the W17 voices: caps
-    labels, the card, and one centred caps status («MÅL · NULLER UNDER PIVOTEN» → «M = LU»). The next orange number can
-    be pressed to do the step (Brilliant: act on the figure); «Neste steg» does the same. Doolittle without row
-    exchanges; exact fractions; quiz:correct when L and U are complete. */
+/** Template: the LU machine, side by side (Felix 2026-10-15). Round 1 (the video's board stacked: receipt over L,
+    readout left, m-rings by every 0) was turned down: «jeg likte faktisk side ved side utseende slik vi har det nå
+    bedre … du trenger ikke lagre huskelapper … bare før det rett inn i [L], men skrittene kan godt være tydeligere:
+    1. identifiser pivot og første tall under. 2. Finn multiplikator og sett inn i L 3. trekk fra rader».
+    So: ARBEIDSKOPI | KVITTERING | L in one row with caps labels on top (the live LU machine's look, L's rows level with
+    the working copy's), and every number under a pivot takes three clear steps, shown by a small stepper instead of
+    status sentences (W17):
+      1 PIVOT            — the pivot in a blue frame, the number under it in an orange one
+      2 MULTIPLIKATOR → L — m = under ÷ pivot under the matrix (under orange, pivot blue), a dashed arrow carries it
+                           into L, where it lands in orange
+      3 TREKK FRA         — a pen-drawn arrow from the pivot row to the row, the row sum under the matrix
+                           ((−1, 0, −2) − (−1)·(1, 2, −1) = (0, 2, −3)), the new row and the receipt line.
+    Doolittle without row exchanges, exact fractions (stacked on the board), quiz:correct when L and U are done. */
 import {
   useEffect,
   useLayoutEffect,
@@ -24,6 +28,7 @@ type P = Record<string, unknown>;
 
 /** The video's numerals (Computer Modern); the host loads «Kateter NewCM», KaTeX_Main is the fallback. */
 const MATH = '"Kateter NewCM", "KaTeX_Main", "Times New Roman", serif';
+const PHASES = ["Pivot", "Multiplikator → L", "Trekk fra"];
 
 let measureCtx: CanvasRenderingContext2D | null = null;
 function textW(s: string, size: number, italic = false): number {
@@ -123,20 +128,17 @@ function Num({
 interface Lay {
   vw: number;
   h: number;
-  big: number;
+  f: number;
+  cw: number;
+  rh: number;
   xs: number[];
   ys: number[];
   bl: number;
   br: number;
   bt: number;
   bb: number;
-  cw: number;
-  pivY: number;
-  capY: number | null;
-  arrX0: number;
-  arrXl: number;
-  readout:
-    { side: "left"; right: number } | { side: "below"; cx: number; y: number };
+  labelY: number;
+  mathY: number; // axis of the line under the working copy
   card: {
     x: number;
     y: number;
@@ -146,148 +148,133 @@ interface Lay {
     y0: number;
     step: number;
   };
-  recArrow: [number, number, number, number] | null;
   lf: number;
+  lcw: number;
   lxs: number[];
   lys: number[];
   lb: [number, number, number, number];
+  lLabelY: number;
   capsF: number;
 }
 
 function layout(n: number, nOps: number, narrow: boolean): Lay {
   const small = n > 3;
   if (!narrow) {
-    const big = small ? 25 : 30;
-    const cw = small ? 54 : 64;
-    const rh = small ? 44 : 52;
-    const bx = 344;
-    const y0 = 128;
-    const xs = Array.from({ length: n }, (_, c) => bx + (c - (n - 1) / 2) * cw);
-    const ys = Array.from({ length: n }, (_, r) => y0 + r * rh);
-    const bl = xs[0] - cw / 2 - 2;
-    const br = xs[n - 1] + cw / 2 + 2;
-    const bt = ys[0] - rh / 2 - 4;
-    const bb = ys[n - 1] + rh / 2 + 4;
-    const pivY = bt - 24;
-    const cardY = pivY - 6;
-    const f = 18;
+    // ARBEIDSKOPI | KVITTERING | L, one row, L's rows level with the working copy's
+    const f = small ? 26 : 30;
+    const cw = small ? 52 : 60;
+    const rh = small ? 42 : 48;
+    const lf = small ? 19 : 22;
+    const lcw = small ? 34 : 40;
+    const arrow = 40;
+    const gap = 36;
+    const cardW = small ? 196 : 186;
+    const matW = n * cw + 12;
+    const lW = n * lcw + 12;
+    const x0 = (720 - (arrow + matW + gap + cardW + gap + lW)) / 2;
+    const bl = x0 + arrow;
+    const br = bl + matW;
+    const labelY = 26;
+    const bt = 44;
+    const xs = Array.from({ length: n }, (_, c) => bl + 6 + cw / 2 + c * cw);
+    const ys = Array.from({ length: n }, (_, r) => bt + 6 + rh / 2 + r * rh);
+    const bb = ys[n - 1] + rh / 2 + 6;
+    const cardX = br + gap;
+    const cardY = labelY - 18;
+    const step = 24;
     const card = {
-      x: 486,
+      x: cardX,
       y: cardY,
-      w: 200,
-      h: 50 + nOps * 26,
-      f,
-      y0: cardY + 54,
-      step: 26,
+      w: cardW,
+      h: Math.max(bb - cardY, 46 + nOps * step),
+      f: 17,
+      y0: bt + 20,
+      step,
     };
-    const lf = small ? 17 : 19;
-    const lcw = small ? 34 : 38;
-    const lrh = small ? 26 : 30;
-    const lcx = 600;
-    const lt = card.y + card.h + 40;
+    const lbl = cardX + cardW + gap;
     const lxs = Array.from(
       { length: n },
-      (_, c) => lcx + (c - (n - 1) / 2) * lcw,
+      (_, c) => lbl + 6 + lcw / 2 + c * lcw,
     );
-    const lys = Array.from({ length: n }, (_, r) => lt + 4 + lrh / 2 + r * lrh);
-    const lb: [number, number, number, number] = [
-      lxs[0] - lcw / 2 - 2,
-      lxs[n - 1] + lcw / 2 + 2,
-      lt,
-      lys[n - 1] + lrh / 2 + 4,
-    ];
-    const capY = bb + 24;
+    const mathY = Math.max(bb, card.y + card.h + 6) + 32;
     return {
       vw: 720,
-      h: Math.max(capY, lb[3]) + 20,
-      big,
+      h: mathY + 34,
+      f,
+      cw,
+      rh,
       xs,
       ys,
       bl,
       br,
       bt,
       bb,
-      cw,
-      pivY,
-      capY,
-      arrX0: bl - 8,
-      arrXl: bl - 38,
-      readout: { side: "left", right: bl - 54 },
+      labelY,
+      mathY,
       card,
-      recArrow: [
-        card.x + card.w / 2,
-        card.y + card.h + 14,
-        card.x + card.w / 2,
-        lt - 6,
-      ],
       lf,
+      lcw,
       lxs,
-      lys,
-      lb,
+      lys: ys,
+      lb: [lbl, lbl + lW, bt, bb],
+      lLabelY: labelY,
       capsF: 11,
     };
   }
-  const big = small ? 20 : 24;
-  const cw = small ? 50 : 62;
-  const rh = small ? 36 : 42;
-  const bx = 222;
-  const y0 = 96;
-  const xs = Array.from({ length: n }, (_, c) => bx + (c - (n - 1) / 2) * cw);
-  const ys = Array.from({ length: n }, (_, r) => y0 + r * rh);
-  const bl = xs[0] - cw / 2 - 2;
-  const br = xs[n - 1] + cw / 2 + 2;
-  const bt = ys[0] - rh / 2 - 4;
-  const bb = ys[n - 1] + rh / 2 + 4;
-  const pivY = bt - 22;
-  const ry = bb + 28;
-  const cardY = ry + 76;
-  const card = {
-    x: 14,
-    y: cardY,
-    w: 186,
-    h: 46 + nOps * 24,
-    f: 16,
-    y0: cardY + 50,
-    step: 24,
-  };
+  // phone: the working copy on top, the line under it, then the receipt and L side by side
+  const f = small ? 21 : 24;
+  const cw = small ? 46 : 54;
+  const rh = small ? 36 : 40;
   const lf = small ? 15 : 17;
-  const lcw = small ? 30 : 34;
+  const lcw = small ? 28 : 32;
+  const matW = n * cw + 12;
+  const bl = (380 - matW) / 2 + 14;
+  const br = bl + matW;
+  const labelY = 22;
+  const bt = 36;
+  const xs = Array.from({ length: n }, (_, c) => bl + 6 + cw / 2 + c * cw);
+  const ys = Array.from({ length: n }, (_, r) => bt + 6 + rh / 2 + r * rh);
+  const bb = ys[n - 1] + rh / 2 + 6;
+  const mathY = bb + 30;
+  const top2 = mathY + 34;
+  const step = 22;
+  const card = {
+    x: 12,
+    y: top2,
+    w: 196,
+    h: 40 + nOps * step,
+    f: 15,
+    y0: top2 + 44,
+    step,
+  };
+  const lW = n * lcw + 12;
+  const lbl = 232 + (136 - lW) / 2;
   const lrh = small ? 24 : 27;
-  const lcx = 300;
-  const lt = cardY + 22;
-  const lxs = Array.from(
-    { length: n },
-    (_, c) => lcx + (c - (n - 1) / 2) * lcw,
-  );
+  const lt = top2 + 26;
+  const lxs = Array.from({ length: n }, (_, c) => lbl + 6 + lcw / 2 + c * lcw);
   const lys = Array.from({ length: n }, (_, r) => lt + 4 + lrh / 2 + r * lrh);
-  const lb: [number, number, number, number] = [
-    lxs[0] - lcw / 2 - 2,
-    lxs[n - 1] + lcw / 2 + 2,
-    lt,
-    lys[n - 1] + lrh / 2 + 4,
-  ];
+  const lbb = lys[n - 1] + lrh / 2 + 4;
   return {
     vw: 380,
-    h: Math.max(card.y + card.h + 12, lb[3]) + 16,
-    big,
+    h: Math.max(card.y + card.h + 10, lbb) + 14,
+    f,
+    cw,
+    rh,
     xs,
     ys,
     bl,
     br,
     bt,
     bb,
-    cw,
-    pivY,
-    capY: null,
-    arrX0: bl - 8,
-    arrXl: bl - 34,
-    readout: { side: "below", cx: bx, y: ry },
+    labelY,
+    mathY,
     card,
-    recArrow: null,
     lf,
+    lcw,
     lxs,
     lys,
-    lb,
+    lb: [lbl, lbl + lW, lt, lbb],
+    lLabelY: top2 + 14,
     capsF: 10.5,
   };
 }
@@ -306,8 +293,9 @@ function LuMaskin({ params }: { params: P }) {
     return { n, m0, ...luSteps(m0) };
   }, [flat]);
   const [idx, setIdx] = useState(0);
-  const total = data ? data.steps.length : 0;
-  const finished = !!data && !data.error && total > 0 && idx >= total;
+  const elims = data ? data.steps.length : 0;
+  const total = elims * 3; // three steps per number under a pivot
+  const finished = !!data && !data.error && elims > 0 && idx >= total;
 
   // the board is drawn for a wide column or a phone; measure the host, and re-measure text once the fonts are in
   const root = useRef<HTMLDivElement>(null);
@@ -351,10 +339,19 @@ function LuMaskin({ params }: { params: P }) {
     );
   }
   const { n, m0, steps, error } = data;
-  const L = layout(n, (n * (n - 1)) / 2, narrow);
-  const cur = idx === 0 ? m0 : steps[idx - 1].after;
-  const last = idx > 0 ? steps[idx - 1] : null;
-  const next = idx < total ? steps[idx] : null;
+  const L = layout(n, elims, narrow);
+
+  // idx 0 = the start; then step p = idx − 1 is phase (p mod 3) of elimination ⌊p / 3⌋
+  const p = idx - 1;
+  const j = idx === 0 ? -1 : Math.floor(p / 3);
+  const ph = idx === 0 ? -1 : p % 3; // 0 pivot · 1 multiplier → L · 2 subtract
+  const e = idx === 0 ? null : steps[j];
+  const before = j > 0 ? steps[j - 1].after : m0;
+  const cur = ph === 2 ? e!.after : before;
+  const inL = steps.slice(0, Math.max(0, j)).concat(e && ph >= 1 ? [e] : []);
+  const onReceipt = steps
+    .slice(0, Math.max(0, j))
+    .concat(e && ph === 2 ? [e] : []);
   const stuck = !!error && idx >= total;
 
   const ink = t.text.primary;
@@ -366,17 +363,11 @@ function LuMaskin({ params }: { params: P }) {
     fontWeight: 600,
     letterSpacing: "0.14em",
   } as const;
-  const caps = (
-    x: number,
-    y: number,
-    s: string,
-    fill: string,
-    anchor: "start" | "middle" | "end" = "middle",
-  ) => (
+  const caps = (x: number, y: number, s: string, fill: string) => (
     <text
       x={x}
       y={y}
-      textAnchor={anchor}
+      textAnchor="middle"
       fontSize={L.capsF}
       fill={fill}
       style={capsStyle}
@@ -385,198 +376,193 @@ function LuMaskin({ params }: { params: P }) {
     </text>
   );
   const go = (k: number) => setIdx(Math.max(0, Math.min(total, k)));
-
-  // which cells have been cleared, and with which multiplier
-  const cleared = new Map<string, Frac>();
-  steps.slice(0, idx).forEach((s) => cleared.set(`${s.i},${s.k}`, s.l));
-  const pk = next ? next.k : -1; // the pivot in play
+  const frame = (
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    stroke: string,
+    fill = "none",
+    key?: string,
+  ) => (
+    <rect
+      key={key}
+      x={x - w / 2}
+      y={y - h / 2}
+      width={w}
+      height={h}
+      rx={8}
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={1.6}
+    />
+  );
 
   /* ---------------------------------------------------------------- the working copy */
+  const marks: ReactNode[] = [];
   const cells: ReactNode[] = [];
+  const showPair = !!e && !finished && ph <= 1; // steps 1–2: the pivot and the number under it
   for (let r = 0; r < n; r++)
     for (let c = 0; c < n; c++) {
       const x = L.xs[c];
       const y = L.ys[r];
-      const v = fTxt(cur[r][c]);
-      const isCleared = cleared.has(`${r},${c}`);
       let fill = ink;
       if (finished) fill = c >= r ? blue : muted;
-      else if (isCleared) fill = muted;
-      else if (r === pk && c === pk) fill = blue;
-      else if (c === pk && r > pk) fill = orange;
-      const fresh = !!last && r === last.i; // the row that just changed
-      const isNext = !!next && !stuck && r === next.i && c === next.k;
+      else if (e && r === e.k && c === e.k) fill = blue;
+      else if (showPair && r === e!.i && c === e!.k) fill = orange;
+      else if (c < r && cur[r][c].n === 0) fill = muted;
+      const fresh = !!e && ph === 2 && r === e.i;
       cells.push(
         <g
           key={`${r},${c}${fresh ? `@${idx}` : ""}`}
-          className={fresh ? "lum-in" : undefined}
+          className={fresh ? "lum-in lum-late" : undefined}
         >
-          {isNext ? (
-            <circle
-              className="lum-halo"
-              cx={x}
-              cy={y}
-              r={L.big * 0.78}
-              fill="none"
-              stroke={orange}
-              strokeOpacity={0.55}
-              strokeWidth={1.5}
-            />
-          ) : null}
-          <Num a={cur[r][c]} x={x} y={y} f={L.big} fill={fill} />
-          {isNext ? (
-            <rect
-              x={x - L.cw / 2}
-              y={y - L.big * 0.8}
-              width={L.cw}
-              height={L.big * 1.6}
-              fill="transparent"
-              style={{ cursor: "pointer" }}
-              role="button"
-              tabIndex={0}
-              aria-label={`Gjør ${v} under pivoten til 0`}
-              onClick={() => go(idx + 1)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  go(idx + 1);
-                }
-              }}
-            />
-          ) : null}
+          <Num a={cur[r][c]} x={x} y={y} f={L.f} fill={fill} />
         </g>,
       );
     }
-
-  // the multiplier left beside each new 0 (the video's small orange ring)
-  const rings: ReactNode[] = [];
-  cleared.forEach((m, key) => {
-    const [r, c] = key.split(",").map(Number);
-    const f = L.big * 0.42;
-    const rad = Math.max(f * 0.9, numW(m, f) / 2 + 4, m.d === 1 ? 0 : f * 1.15);
-    const cx = L.xs[c] + L.big * 0.42 + rad;
-    const cy = L.ys[r] + L.big * 0.4;
-    const isNew = !!last && last.i === r && last.k === c;
-    rings.push(
-      <g
-        key={`ring${key}`}
-        className={isNew ? "lum-pop" : undefined}
-        style={{ opacity: finished ? 0.45 : 1 }}
-      >
-        <circle
-          cx={cx}
-          cy={cy}
-          r={rad}
-          fill="none"
-          stroke={orange}
-          strokeWidth={1.3}
-        />
-        <Num a={m} x={cx} y={cy} f={f} fill={orange} />
-      </g>,
+  if (e && !finished) {
+    marks.push(
+      frame(L.xs[e.k], L.ys[e.k], L.cw - 10, L.rh - 10, blue, "none", "piv"),
     );
-  });
-
-  /* ---------------------------------------------------------------- PIVOT label and its arrow */
-  let pivot: ReactNode = null;
-  if (next && !stuck) {
-    const px = L.xs[pk];
-    const py = L.ys[pk];
-    const top = py - L.big * 0.78;
-    if (pk === 0) {
-      pivot = (
-        <g key={`piv${pk}`} className="lum-in">
-          {caps(px, L.pivY, "PIVOT", blue)}
-          <path
-            d={`M ${px} ${L.pivY + 6} V ${top}`}
-            stroke={blue}
-            strokeWidth={1.4}
-            fill="none"
-          />
-          <path
-            d={head(px, top, Math.PI / 2, 6)}
-            stroke={blue}
-            strokeWidth={1.4}
-            fill="none"
-            strokeLinecap="round"
-          />
-        </g>
+    if (ph <= 1)
+      marks.push(
+        frame(
+          L.xs[e.k],
+          L.ys[e.i],
+          L.cw - 10,
+          L.rh - 10,
+          orange,
+          "none",
+          `tgt${j}`,
+        ),
       );
-    } else {
-      // from above the matrix, down the gap between two columns, then in to the pivot (as in the video)
-      const lx = px + L.cw / 2;
-      const ex = px + L.big * 0.42;
-      const ey = py - L.big * 0.62;
-      const turn = ey - 14;
-      const a = Math.atan2(ey - turn, ex - lx);
-      pivot = (
-        <g key={`piv${pk}`} className="lum-in">
-          {caps(lx, L.pivY, "PIVOT", blue)}
-          <path
-            d={`M ${lx} ${L.pivY + 6} V ${turn} L ${ex} ${ey}`}
-            stroke={blue}
-            strokeWidth={1.4}
-            fill="none"
-            strokeLinejoin="round"
-          />
-          <path
-            d={head(ex, ey, a, 6)}
-            stroke={blue}
-            strokeWidth={1.4}
-            fill="none"
-            strokeLinecap="round"
-          />
-        </g>
-      );
-    }
+    if (ph === 2)
+      for (let c = 0; c < n; c++)
+        marks.push(
+          <g key={`new${idx}-${c}`} className="lum-in">
+            {frame(
+              L.xs[c],
+              L.ys[e.i],
+              L.cw - 10,
+              L.rh - 10,
+              "none",
+              "var(--kt-bg-panel-raised)",
+            )}
+          </g>,
+        );
   }
 
-  /* ---------------------------------------------------------------- the row operation: arrow + multiplier readout */
-  let op: ReactNode = null;
-  if (last && !finished) {
-    const y1 = L.ys[last.k];
-    const y2 = L.ys[last.i];
-    const x0 = L.arrX0;
-    const xl = L.arrXl;
-    const rr = 10;
-    const d = `M ${x0} ${y1} H ${xl + rr} Q ${xl} ${y1} ${xl} ${y1 + rr} V ${y2 - rr} Q ${xl} ${y2} ${xl + rr} ${y2} H ${x0}`;
-    // MULTIPLIKATOR  m = under / pivot = l   — under orange, pivot blue, as in the matrix
+  /* ---------------------------------------------------------------- step 2 / 3: the line under the working copy */
+  let below: ReactNode = null;
+  const matCx = (L.bl + L.br) / 2;
+  if (e && !finished && ph === 1) {
+    // m = under / pivot = value, then a dashed arrow into L
     const f = narrow ? 18 : 20;
     const fs = f * 0.86;
-    const under = fTxt(last.under);
-    const piv = fTxt(last.pivot);
-    const val = last.l;
+    const under = fTxt(e.under);
+    const piv = fTxt(e.pivot);
     const gap = f * 0.32;
     const wm = textW("m", f, true);
     const weq = textW("=", f);
     const wfr = Math.max(textW(under, fs), textW(piv, fs)) + 8;
-    const wval = numW(val, f);
+    const wval = numW(e.l, f);
     const wAll = wm + gap + weq + gap + wfr + gap + weq + gap + wval;
-    const capH = 26;
-    let fx: number;
-    let axis: number;
-    let capX: number;
-    let capAnchor: "start" | "middle" | "end";
-    if (L.readout.side === "left") {
-      fx = L.readout.right - wAll;
-      axis = (y1 + y2) / 2 + 12;
-      capX = L.readout.right;
-      capAnchor = "end";
-    } else {
-      fx = L.readout.cx - wAll / 2;
-      axis = L.readout.y + capH + 6;
-      capX = L.readout.cx;
-      capAnchor = "middle";
-    }
-    const capY = L.readout.side === "left" ? axis - capH - 4 : L.readout.y;
+    const axis = L.mathY;
     const base = axis + f * 0.26;
-    let x = fx;
-    const xEq1 = x + wm + gap;
+    const fx = matCx - wAll / 2;
+    const xEq1 = fx + wm + gap;
     const xFr = xEq1 + weq + gap;
     const xEq2 = xFr + wfr + gap;
     const xVal = xEq2 + weq + gap;
-    x = xVal;
-    op = (
-      <g key={`op${idx}`}>
+    // into L: along the line, then up/down beside L (in the gap before it, or past it on a phone) and in at row i —
+    // never through L's other cells; the new entry gets its own frame
+    const a0 = xVal + wval + 12;
+    const [lbl0, lbr0] = L.lb;
+    const fromLeft = a0 < lbl0 - 24;
+    const vx = fromLeft ? lbl0 - 18 : lbr0 + 16;
+    const ex = fromLeft ? lbl0 - 5 : lbr0 + 5;
+    const yi = L.lys[e.i];
+    const dir = yi < axis ? -1 : 1;
+    const rr = 8;
+    const d = `M ${a0} ${axis} H ${vx - rr} Q ${vx} ${axis} ${vx} ${axis + dir * rr} V ${yi - dir * rr} Q ${vx} ${yi} ${vx + (fromLeft ? rr : -rr)} ${yi} H ${ex}`;
+    below = (
+      <g key={`m${idx}`}>
+        <g className="lum-in" style={{ fontFamily: MATH }}>
+          <text x={fx} y={base} fontSize={f} fontStyle="italic" fill={orange}>
+            m
+          </text>
+          <text x={xEq1} y={base} fontSize={f} fill={ink}>
+            =
+          </text>
+          <text
+            x={xFr + wfr / 2}
+            y={axis - 5}
+            textAnchor="middle"
+            fontSize={fs}
+            fill={orange}
+          >
+            {under}
+          </text>
+          <line
+            x1={xFr}
+            x2={xFr + wfr}
+            y1={axis}
+            y2={axis}
+            stroke={ink}
+            strokeWidth={1.1}
+          />
+          <text
+            x={xFr + wfr / 2}
+            y={axis + fs * 0.98}
+            textAnchor="middle"
+            fontSize={fs}
+            fill={blue}
+          >
+            {piv}
+          </text>
+          <text x={xEq2} y={base} fontSize={f} fill={ink}>
+            =
+          </text>
+          <Num
+            a={e.l}
+            x={xVal + wval / 2}
+            y={e.l.d === 1 ? base - f * 0.34 : axis}
+            f={f}
+            fill={orange}
+          />
+        </g>
+        <path
+          className="lum-in lum-late"
+          d={d}
+          stroke={orange}
+          strokeWidth={1.5}
+          strokeDasharray="5 4"
+          fill="none"
+          strokeLinecap="round"
+        />
+        <path
+          className="lum-in lum-later"
+          d={head(ex, yi, fromLeft ? 0 : Math.PI, 6)}
+          stroke={orange}
+          strokeWidth={1.5}
+          fill="none"
+          strokeLinecap="round"
+        />
+      </g>
+    );
+  }
+  let arrow: ReactNode = null;
+  if (e && !finished && ph === 2) {
+    // the row operation: pen arrow from the pivot row, and the row sum under the matrix
+    const y1 = L.ys[e.k];
+    const y2 = L.ys[e.i];
+    const x0 = L.bl - 6;
+    const xl = L.bl - 30;
+    const rr = 9;
+    const d = `M ${x0} ${y1} H ${xl + rr} Q ${xl} ${y1} ${xl} ${y1 + rr} V ${y2 - rr} Q ${xl} ${y2} ${xl + rr} ${y2} H ${x0}`;
+    arrow = (
+      <g key={`arr${idx}`}>
         <path
           className="lum-draw"
           pathLength={1}
@@ -594,97 +580,64 @@ function LuMaskin({ params }: { params: P }) {
           fill="none"
           strokeLinecap="round"
         />
-        <g className="lum-in">
-          {caps(capX, capY, "MULTIPLIKATOR", orange, capAnchor)}
-          <g style={{ fontFamily: MATH }}>
-            <text x={fx} y={base} fontSize={f} fontStyle="italic" fill={orange}>
-              m
-            </text>
-            <text x={xEq1} y={base} fontSize={f} fill={ink}>
-              =
-            </text>
-            <text
-              x={xFr + wfr / 2}
-              y={axis - 5}
-              textAnchor="middle"
-              fontSize={fs}
-              fill={orange}
-            >
-              {under}
-            </text>
-            <line
-              x1={xFr}
-              x2={xFr + wfr}
-              y1={axis}
-              y2={axis}
-              stroke={ink}
-              strokeWidth={1.1}
-            />
-            <text
-              x={xFr + wfr / 2}
-              y={axis + fs * 0.98}
-              textAnchor="middle"
-              fontSize={fs}
-              fill={blue}
-            >
-              {piv}
-            </text>
-            <text x={xEq2} y={base} fontSize={f} fill={ink}>
-              =
-            </text>
-            <Num
-              a={val}
-              x={x + wval / 2}
-              y={val.d === 1 ? base - f * 0.34 : axis}
-              f={f}
-              fill={orange}
-            />
-          </g>
-        </g>
       </g>
     );
+    const f = narrow ? 15 : 18;
+    const tup = (row: Frac[], hi: string) =>
+      row.map((v, c) => (
+        <tspan key={c} fill={c === e.k ? hi : ink}>
+          {(c ? ", " : "") + fTxt(v)}
+        </tspan>
+      ));
+    const neg = e.l.n < 0;
+    const parts = [
+      ...before[e.i].map(fTxt),
+      ...before[e.k].map(fTxt),
+      ...e.after[e.i].map(fTxt),
+    ].join(", ");
+    const w = textW(`(${parts}) − (${fTxt(e.l)}) · () = ()`, f);
+    const x = Math.max(8, Math.min(matCx - w / 2, L.vw - 8 - w));
+    below = (
+      <text
+        key={`sum${idx}`}
+        className="lum-in lum-late"
+        x={x}
+        y={L.mathY + f * 0.3}
+        fontSize={f}
+        fill={ink}
+        style={{ fontFamily: MATH }}
+      >
+        ({tup(before[e.i], orange)}) − {neg ? "(" : ""}
+        <tspan fill={orange}>{fTxt(e.l)}</tspan>
+        {neg ? ")" : ""} · ({tup(before[e.k], blue)}) = (
+        {tup(e.after[e.i], ink)})
+      </text>
+    );
   }
-
-  /* ---------------------------------------------------------------- name / caption of the working copy */
-  const nameLeft = idx === 0 ? navn : finished ? "U" : null;
-  const nameFill = finished ? blue : ink;
-  const name = nameLeft ? (
-    <text
-      key={`name${nameLeft}`}
-      className="lum-in"
-      x={L.bl - 14}
-      y={(L.ys[0] + L.ys[n - 1]) / 2 + L.big * 0.34}
-      textAnchor="end"
-      fontSize={L.big}
-      fontStyle="italic"
-      fill={nameFill}
-      style={{ fontFamily: MATH }}
-    >
-      {nameLeft}
-    </text>
-  ) : null;
 
   /* ---------------------------------------------------------------- the receipt */
   const C = L.card;
   const zig = (() => {
-    const tooth = 10;
-    const k = Math.round(C.w / tooth);
+    const k = Math.round(C.w / 10);
     let d = `M ${C.x} ${C.y} H ${C.x + C.w} V ${C.y + C.h}`;
-    for (let j = k - 1; j >= 0; j--)
-      d += ` L ${C.x + (j + 0.5) * (C.w / k)} ${C.y + C.h + 6} L ${C.x + j * (C.w / k)} ${C.y + C.h}`;
+    for (let q = k - 1; q >= 0; q--)
+      d += ` L ${C.x + (q + 0.5) * (C.w / k)} ${C.y + C.h + 6} L ${C.x + q * (C.w / k)} ${C.y + C.h}`;
     return d + " Z";
   })();
-  const lines = steps.slice(0, idx).map((s, j) => {
-    const m = fTxt(s.l);
+  const lines = onReceipt.map((s, q) => {
     const neg = s.l.n < 0;
     const f = C.f;
     const sb = f * 0.66;
     return (
       <text
-        key={j}
-        className={j === idx - 1 ? "lum-in" : undefined}
+        key={q}
+        className={
+          ph === 2 && q === onReceipt.length - 1 && !finished
+            ? "lum-in lum-late"
+            : undefined
+        }
         x={C.x + 18}
-        y={C.y0 + j * C.step}
+        y={C.y0 + q * C.step}
         fontSize={f}
         fill={ink}
         style={{ fontFamily: MATH }}
@@ -695,7 +648,7 @@ function LuMaskin({ params }: { params: P }) {
         </tspan>
         <tspan dy={-f * 0.22}>{" − "}</tspan>
         {neg ? "(" : ""}
-        <tspan fill={orange}>{m}</tspan>
+        <tspan fill={orange}>{fTxt(s.l)}</tspan>
         {neg ? ")" : ""}
         {" · "}
         <tspan fontStyle="italic">R</tspan>
@@ -708,20 +661,32 @@ function LuMaskin({ params }: { params: P }) {
 
   /* ---------------------------------------------------------------- L */
   const lcells: ReactNode[] = [];
+  const known = new Map(inL.map((s) => [`${s.i},${s.k}`, s.l]));
   for (let r = 0; r < n; r++)
     for (let c = 0; c < n; c++) {
       const x = L.lxs[c];
       const y = L.lys[r];
       if (c < r) {
-        const m = cleared.get(`${r},${c}`);
-        const isNew = !!last && last.i === r && last.k === c;
+        const m = known.get(`${r},${c}`);
+        const isNew = !!e && ph === 1 && e.i === r && e.k === c;
         lcells.push(
           m ? (
-            <g key={`l${r}${c}`} className={isNew ? "lum-pop" : undefined}>
+            <g
+              key={`l${r}${c}${isNew ? idx : ""}`}
+              className={isNew ? "lum-pop lum-later" : undefined}
+            >
+              {isNew ? frame(x, y, L.lcw - 6, L.lf * 1.5, orange) : null}
               <Num a={m} x={x} y={y} f={L.lf} fill={orange} />
             </g>
           ) : (
-            <circle key={`l${r}${c}`} cx={x} cy={y} r={3.2} fill={orange} />
+            <circle
+              key={`l${r}${c}`}
+              cx={x}
+              cy={y}
+              r={2.6}
+              fill={muted}
+              opacity={0.6}
+            />
           ),
         );
       } else
@@ -741,12 +706,15 @@ function LuMaskin({ params }: { params: P }) {
     }
   const [lbl, lbr, lbt, lbb] = L.lb;
 
+  const matLabel = idx === 0 ? navn : finished ? "U" : "Arbeidskopi";
+  const aria = `LU-faktorisering, steg ${idx} av ${total}`;
   const status = stuck
     ? "Pivoten er 0 · radbytte trengs"
     : finished
       ? `${navn} = LU`
-      : "Mål · nuller under pivoten";
-  const aria = `LU-faktorisering, steg ${idx} av ${total}`;
+      : idx === 0
+        ? "Mål · nuller under pivoten"
+        : null;
 
   return (
     <div className="kviz-widget kviz-lum" ref={root}>
@@ -762,59 +730,29 @@ function LuMaskin({ params }: { params: P }) {
         }}
       >
         {/* the working copy */}
+        {caps(matCx, L.labelY, matLabel.toUpperCase(), finished ? blue : muted)}
+        {marks}
         <path
           d={brackets(L.bl, L.br, L.bt, L.bb, 10)}
           stroke={finished ? blue : ink}
           strokeWidth={1.8}
           fill="none"
         />
-        {name}
         {cells}
-        {rings}
-        {pivot}
-        {op}
-        {L.capY !== null && idx > 0 && !finished
-          ? caps((L.bl + L.br) / 2, L.capY, "ARBEIDSKOPI", muted)
-          : null}
+        {arrow}
+        {below}
         {/* the receipt */}
         <path d={zig} fill="var(--kt-bg-panel)" />
-        {caps(C.x + C.w / 2, C.y + 24, "KVITTERING", muted)}
+        {caps(C.x + C.w / 2, L.card.y + 18, "KVITTERING", muted)}
         {lines}
-        {L.recArrow ? (
-          <g>
-            <path
-              d={`M ${L.recArrow[0]} ${L.recArrow[1]} V ${L.recArrow[3]}`}
-              stroke={orange}
-              strokeWidth={1.6}
-              fill="none"
-            />
-            <path
-              d={head(L.recArrow[2], L.recArrow[3], Math.PI / 2, 6)}
-              stroke={orange}
-              strokeWidth={1.6}
-              fill="none"
-              strokeLinecap="round"
-            />
-          </g>
-        ) : null}
         {/* L */}
+        {caps((lbl + lbr) / 2, L.lLabelY, "L", orange)}
         <path
           d={brackets(lbl, lbr, lbt, lbb, 7)}
           stroke={ink}
           strokeWidth={1.4}
           fill="none"
         />
-        <text
-          x={lbl - 12}
-          y={(lbt + lbb) / 2 + L.lf * 0.4}
-          textAnchor="end"
-          fontSize={L.lf * 1.2}
-          fontStyle="italic"
-          fill={orange}
-          style={{ fontFamily: MATH }}
-        >
-          L
-        </text>
         {lcells}
       </svg>
       <div
@@ -851,12 +789,38 @@ function LuMaskin({ params }: { params: P }) {
           Nullstill
         </button>
       </div>
-      <p
-        className={finished ? "kviz-capline is-done" : "kviz-capline"}
-        aria-live="polite"
-      >
-        {status}
-      </p>
+      {status ? (
+        <p
+          className={finished ? "kviz-capline is-done" : "kviz-capline"}
+          aria-live="polite"
+        >
+          {status}
+        </p>
+      ) : (
+        // the three steps for this number, the one you are on in orange
+        <div
+          className="lum-stepper"
+          aria-live="polite"
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            alignItems: "center",
+            width: "auto",
+          }}
+        >
+          {PHASES.map((label, k) => (
+            <span
+              key={k}
+              className={k === ph ? "is-on" : k < ph ? "is-done" : undefined}
+            >
+              <span className="lum-n">{k + 1}</span>
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
       <p className="kviz-capline is-small">{`steg ${Math.min(idx, total)} / ${total}`}</p>
     </div>
   );
@@ -865,7 +829,7 @@ function LuMaskin({ params }: { params: P }) {
 registerTemplate({
   id: "lu-maskin",
   description:
-    "LU-maskinen i W17-stil (videoens tavle som widget): arbeidskopien med «PIVOT»-pil i blått og tallet under i oransje, en pennetegnet pil fra pivotraden til raden som nulles med MULTIPLIKATOR-avlesningen m = under ÷ pivot, en liten oransje ring med m ved hver ny 0, KVITTERING-kortet med radoperasjonene og pil ned til L, der de oransje prikkene fylles. Bare versal-etiketter, kortet og én sentrert versal-status («MÅL · NULLER UNDER PIVOTEN» → «M = LU»). Det oransje tallet kan trykkes for å gjøre steget. Uten radbytter (Doolittle), eksakte brøker; quiz:correct når L og U er ferdige.",
+    "LU-maskinen side ved side (ARBEIDSKOPI | KVITTERING | L, versal-etiketter over) med tre tydelige trinn for hvert tall under en pivot: 1 pivot og tallet under markeres, 2 multiplikatoren m = under ÷ pivot vises under matrisen og føres med en pil rett inn i L, 3 pennepil fra pivotraden, radregningen under matrisen og ny rad + kvitteringslinje. En liten trinnviser (1 PIVOT · 2 MULTIPLIKATOR → L · 3 TREKK FRA) i stedet for statussetninger (W17). Uten radbytter (Doolittle), eksakte brøker (stablet); quiz:correct når L og U er ferdige.",
   curriculum: ["universitet", "TMA4400"],
   params: {
     matrise: {
