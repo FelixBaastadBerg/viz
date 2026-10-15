@@ -143,8 +143,12 @@ function DijkstraGraf({ params }: { params: P }) {
   );
 
   const obj = t.accents.object;
-  const touch = t.accents.touch;
-  const right = t.accents.right;
+  // dark stage = the video's grey identity (V53/V54, demo 2026-10-15): the answer (finished nodes, the path) orange,
+  // the edges blue, what is in play yellow — no green, and no translucent orange over grey; light themes unchanged
+  const dark = t.mode === "dark";
+  const touch = dark ? t.accents.alt : t.accents.touch;
+  const right = dark ? t.accents.touch : t.accents.right;
+  const paper = dark ? "var(--kt-bg)" : "#fff";
 
   const S = 56; // px per graph unit
   const R = 22; // node radius px
@@ -193,7 +197,7 @@ function DijkstraGraf({ params }: { params: P }) {
             <g key={name}>
               {/* a white paper token with a dark pen edge (V45) */}
               <path d={handCircle(x, y, R, name)}
-                fill={fin ? `color-mix(in srgb, ${right.stroke} 16%, #fff)` : "#fff"}
+                fill={fin ? (dark ? t.stage.panelRaised : `color-mix(in srgb, ${right.stroke} 16%, #fff)`) : paper}
                 stroke={fin ? right.stroke : "var(--kt-text)"} strokeWidth={2.4} strokeLinecap="round" />
               {cur && (
                 <path d={handCircle(x, y, R + 7, name + "ring")} fill="none"
