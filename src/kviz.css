@@ -482,14 +482,10 @@ input[type="range"].kviz-slider--lead::-webkit-slider-thumb {
 .kviz-challenge.is-card .kviz-challenge-fb { margin-left: 0; }
 .kviz-challenge.is-card .kviz-challenge-t { font-size: 17px; }
 .kviz-challenge.is-card .kviz-challenge-box { margin-top: 1px; }
-.kviz-field .MafsView { --mafs-bg: transparent; }
-.kviz-meter-l { flex: none; font-size: 15px; color: var(--kt-text); }
-.kviz-meter-track { height: 8px; border-radius: 999px; background: var(--kt-border); overflow: hidden; }
-.kviz-meter-fill { height: 100%; border-radius: 999px; background: var(--kt-text); transition: width 120ms linear, background 200ms; }
-.kviz-meter-fill.is-zero { background: var(--kt-touch); }
-.kviz-meter-v { flex: none; min-width: 3.2em; text-align: right; font-family: var(--kt-font-ui); font-variant-numeric: tabular-nums; font-size: 15px; color: var(--kt-text); }
 /* side by side only where there is room: on a phone the figure comes first and the card under it */
 @media (max-width: 700px) {
   .kviz-kraft-side { grid-template-columns: minmax(0, 1fr) !important; }
   .kviz-kraft-side > .kviz-challenge { order: 2; }
 }
+.kviz-forcecard-h { font-family: var(--kt-font-ui); font-size: 11.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--kt-text-muted); }
+.kviz-forcecard .katex { font-size: 1.05em; color: var(--kt-text); }

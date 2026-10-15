@@ -15,7 +15,7 @@ export function KFormula({
   className?: string;
 }) {
   const html = useMemo(
-    () => katex.renderToString(tex, { output: "html", trust: true }),
+    () => katex.renderToString(tex, { output: "html", trust: true, throwOnError: false }), // a bad formula never takes the page down
     [tex]
   );
   return (
