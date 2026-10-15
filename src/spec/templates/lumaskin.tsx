@@ -1,16 +1,13 @@
-/** Template: the LU machine, side by side (Felix 2026-10-15). Round 1 (the video's board stacked: receipt over L,
-    readout left, m-rings by every 0) was turned down: «jeg likte faktisk side ved side utseende slik vi har det nå
-    bedre … du trenger ikke lagre huskelapper … bare før det rett inn i [L], men skrittene kan godt være tydeligere:
-    1. identifiser pivot og første tall under. 2. Finn multiplikator og sett inn i L 3. trekk fra rader».
-    So: ARBEIDSKOPI | KVITTERING | L in one row with caps labels on top (the live LU machine's look, L's rows level with
-    the working copy's), and every number under a pivot takes three clear steps, shown by a small stepper instead of
-    status sentences (W17):
-      1 PIVOT            — the pivot in a blue frame, the number under it in an orange one
-      2 MULTIPLIKATOR → L — m = under ÷ pivot under the matrix (under orange, pivot blue), a dashed arrow carries it
-                           into L, where it lands in orange
-      3 TREKK FRA         — a pen-drawn arrow from the pivot row to the row, the row sum under the matrix
-                           ((−1, 0, −2) − (−1)·(1, 2, −1) = (0, 2, −3)), the new row and the receipt line.
-    Doolittle without row exchanges, exact fractions (stacked on the board), quiz:correct when L and U are done. */
+/** Template: the LU machine, side by side (Felix 2026-10-15, round 3). ARBEIDSKOPI | KVITTERING | L in one row: two
+    equally wide matrices and a receipt as wide and as tall as they are, labels on one line above (W18). Every number
+    under a pivot takes three clear steps — Felix: «1. identifiser pivot og første tall under. 2. Finn multiplikator og
+    sett inn i L 3. trekk fra rader» — shown by marks on the board and a small stepper, never by sentences or worked
+    lines («de skal ha sett videoen og de trenger ikke få alle utledningene»):
+      1 PIVOT             — the pivot in a blue frame, the number under it in an orange one
+      2 MULTIPLIKATOR → L — the multiplier lands in L in an orange frame
+      3 TREKK FRA         — a pen-drawn arrow from the pivot row to the row, the new row, the receipt line.
+    Round 1 (the video's board stacked, m-rings by every 0) and round 2 (the m-fraction and the row sum under the
+    matrix) were turned down. Doolittle without row exchanges, exact fractions (stacked), quiz:correct when done. */
 import {
   useEffect,
   useLayoutEffect,
@@ -55,15 +52,6 @@ function brackets(
   tick: number,
 ): string {
   return `M ${l + tick} ${t} H ${l} V ${b} H ${l + tick} M ${r - tick} ${t} H ${r} V ${b} H ${r - tick}`;
-}
-
-/** Width of a number as `Num` draws it. */
-function numW(a: Frac, f: number): number {
-  if (a.d === 1) return textW(fTxt(a), f);
-  const s = f * 0.62;
-  const w =
-    Math.max(textW(String(Math.abs(a.n)), s), textW(String(a.d), s)) + 4;
-  return (a.n < 0 ? textW("−", f * 0.85) + 1 : 0) + w;
 }
 
 /** A number centred on (x, y) as on the video's board: integers as text, fractions stacked (sign, numerator over
@@ -125,7 +113,11 @@ function Num({
   );
 }
 
-interface Lay {
+/** Geometry of the board (STANDARDS W18). It depends on n only — never on the numbers — so nothing moves or resizes
+    between steps: both matrices are equally wide (fixed column width, fractions stacked), the receipt is as wide and as
+    tall as they are, the three share top and bottom, and the labels sit on one line above. Receipt lines sit level
+    with the matrix rows when there are no more of them than rows. */
+export interface Lay {
   vw: number;
   h: number;
   f: number;
@@ -138,18 +130,16 @@ interface Lay {
   bt: number;
   bb: number;
   labelY: number;
-  mathY: number; // axis of the line under the working copy
+  arrowXl: number;
   card: {
     x: number;
     y: number;
     w: number;
     h: number;
     f: number;
-    y0: number;
-    step: number;
+    lineYs: number[];
   };
-  lf: number;
-  lcw: number;
+  cardLabelY: number;
   lxs: number[];
   lys: number[];
   lb: [number, number, number, number];
@@ -157,124 +147,102 @@ interface Lay {
   capsF: number;
 }
 
-function layout(n: number, nOps: number, narrow: boolean): Lay {
+export function layout(n: number, nOps: number, narrow: boolean): Lay {
+  const tiny = n < 3;
   const small = n > 3;
+  const lineYs = (rows: number[], top: number, h: number) =>
+    nOps <= n
+      ? rows.slice(0, nOps)
+      : Array.from(
+          { length: nOps },
+          (_, j) => top + 12 + (j + 0.5) * ((h - 24) / nOps),
+        );
+  const cols = (left: number, cw: number) =>
+    Array.from({ length: n }, (_, c) => left + 6 + cw / 2 + c * cw);
+  const rows = (top: number, rh: number) =>
+    Array.from({ length: n }, (_, r) => top + 6 + rh / 2 + r * rh);
   if (!narrow) {
-    // ARBEIDSKOPI | KVITTERING | L, one row, L's rows level with the working copy's
-    const f = small ? 26 : 30;
-    const cw = small ? 52 : 60;
-    const rh = small ? 42 : 48;
-    const lf = small ? 19 : 22;
-    const lcw = small ? 34 : 40;
-    const arrow = 40;
-    const gap = 36;
-    const cardW = small ? 196 : 186;
-    const matW = n * cw + 12;
-    const lW = n * lcw + 12;
-    const x0 = (720 - (arrow + matW + gap + cardW + gap + lW)) / 2;
-    const bl = x0 + arrow;
-    const br = bl + matW;
-    const labelY = 26;
-    const bt = 44;
-    const xs = Array.from({ length: n }, (_, c) => bl + 6 + cw / 2 + c * cw);
-    const ys = Array.from({ length: n }, (_, r) => bt + 6 + rh / 2 + r * rh);
-    const bb = ys[n - 1] + rh / 2 + 6;
-    const cardX = br + gap;
-    const cardY = labelY - 18;
-    const step = 24;
-    const card = {
-      x: cardX,
-      y: cardY,
-      w: cardW,
-      h: Math.max(bb - cardY, 46 + nOps * step),
-      f: 17,
-      y0: bt + 20,
-      step,
-    };
-    const lbl = cardX + cardW + gap;
-    const lxs = Array.from(
-      { length: n },
-      (_, c) => lbl + 6 + lcw / 2 + c * lcw,
-    );
-    const mathY = Math.max(bb, card.y + card.h + 6) + 32;
+    // ARBEIDSKOPI | KVITTERING | L — three equal blocks in one row, centred; the pen arrow lives in the left margin
+    const cw = tiny ? 80 : small ? 48 : 60;
+    const rh = small ? 40 : 46;
+    const w = n * cw + 12;
+    const gap = small ? 24 : 36;
+    const bl = (720 - (3 * w + 2 * gap)) / 2;
+    const bt = 38;
+    const ys = rows(bt, rh);
+    const bb = bt + n * rh + 12;
+    const cardX = bl + w + gap;
+    const lbl = cardX + w + gap;
     return {
       vw: 720,
-      h: mathY + 34,
-      f,
+      h: bb + 12,
+      f: small ? 24 : 28,
       cw,
       rh,
-      xs,
+      xs: cols(bl, cw),
       ys,
       bl,
-      br,
+      br: bl + w,
       bt,
       bb,
-      labelY,
-      mathY,
-      card,
-      lf,
-      lcw,
-      lxs,
+      labelY: 22,
+      arrowXl: bl - 26,
+      card: {
+        x: cardX,
+        y: bt,
+        w,
+        h: bb - bt,
+        f: small ? 16 : 17,
+        lineYs: lineYs(ys, bt, bb - bt),
+      },
+      cardLabelY: 22,
+      lxs: cols(lbl, cw),
       lys: ys,
-      lb: [lbl, lbl + lW, bt, bb],
-      lLabelY: labelY,
+      lb: [lbl, lbl + w, bt, bb],
+      lLabelY: 22,
       capsF: 11,
     };
   }
-  // phone: the working copy on top, the line under it, then the receipt and L side by side
-  const f = small ? 21 : 24;
-  const cw = small ? 46 : 54;
-  const rh = small ? 36 : 40;
-  const lf = small ? 15 : 17;
-  const lcw = small ? 28 : 32;
-  const matW = n * cw + 12;
-  const bl = (380 - matW) / 2 + 14;
-  const br = bl + matW;
-  const labelY = 22;
-  const bt = 36;
-  const xs = Array.from({ length: n }, (_, c) => bl + 6 + cw / 2 + c * cw);
-  const ys = Array.from({ length: n }, (_, r) => bt + 6 + rh / 2 + r * rh);
-  const bb = ys[n - 1] + rh / 2 + 6;
-  const mathY = bb + 30;
-  const top2 = mathY + 34;
-  const step = 22;
-  const card = {
-    x: 12,
-    y: top2,
-    w: 196,
-    h: 40 + nOps * step,
-    f: 15,
-    y0: top2 + 44,
-    step,
-  };
-  const lW = n * lcw + 12;
-  const lbl = 232 + (136 - lW) / 2;
-  const lrh = small ? 24 : 27;
-  const lt = top2 + 26;
-  const lxs = Array.from({ length: n }, (_, c) => lbl + 6 + lcw / 2 + c * lcw);
-  const lys = Array.from({ length: n }, (_, r) => lt + 4 + lrh / 2 + r * lrh);
-  const lbb = lys[n - 1] + lrh / 2 + 4;
+  // phone: the working copy on top; the receipt and L side by side under it, each as wide and tall as the matrix
+  const cw = tiny ? 66 : small ? 38 : 50;
+  const rh = small ? 30 : 36;
+  const w = n * cw + 12;
+  const gap = Math.min(28, 380 - 2 * w - 24);
+  const x0 = (380 - (2 * w + gap)) / 2;
+  const bl = (380 - w) / 2;
+  const bt = 34;
+  const bb = bt + n * rh + 12;
+  const bt2 = bb + 46;
+  const bb2 = bt2 + (bb - bt);
+  const ys2 = rows(bt2, rh);
+  const lbl = x0 + w + gap;
   return {
     vw: 380,
-    h: Math.max(card.y + card.h + 10, lbb) + 14,
-    f,
+    h: bb2 + 12,
+    f: small ? 18 : 22,
     cw,
     rh,
-    xs,
-    ys,
+    xs: cols(bl, cw),
+    ys: rows(bt, rh),
     bl,
-    br,
+    br: bl + w,
     bt,
     bb,
-    labelY,
-    mathY,
-    card,
-    lf,
-    lcw,
-    lxs,
-    lys,
-    lb: [lbl, lbl + lW, lt, lbb],
-    lLabelY: top2 + 14,
+    labelY: 20,
+    arrowXl: bl - 26,
+    card: {
+      x: x0,
+      y: bt2,
+      w,
+      h: bb2 - bt2,
+      f: small ? 14 : 15,
+      lineYs: lineYs(ys2, bt2, bb2 - bt2),
+    },
+    cardLabelY: bt2 - 14,
+    lxs: cols(lbl, cw),
+    lys: ys2,
+    lb: [lbl, lbl + w, bt2, bb2],
+    lLabelY: bt2 - 14,
     capsF: 10.5,
   };
 }
@@ -453,112 +421,14 @@ function LuMaskin({ params }: { params: P }) {
         );
   }
 
-  /* ---------------------------------------------------------------- step 2 / 3: the line under the working copy */
-  let below: ReactNode = null;
   const matCx = (L.bl + L.br) / 2;
-  if (e && !finished && ph === 1) {
-    // m = under / pivot = value, then a dashed arrow into L
-    const f = narrow ? 18 : 20;
-    const fs = f * 0.86;
-    const under = fTxt(e.under);
-    const piv = fTxt(e.pivot);
-    const gap = f * 0.32;
-    const wm = textW("m", f, true);
-    const weq = textW("=", f);
-    const wfr = Math.max(textW(under, fs), textW(piv, fs)) + 8;
-    const wval = numW(e.l, f);
-    const wAll = wm + gap + weq + gap + wfr + gap + weq + gap + wval;
-    const axis = L.mathY;
-    const base = axis + f * 0.26;
-    const fx = matCx - wAll / 2;
-    const xEq1 = fx + wm + gap;
-    const xFr = xEq1 + weq + gap;
-    const xEq2 = xFr + wfr + gap;
-    const xVal = xEq2 + weq + gap;
-    // into L: along the line, then up/down beside L (in the gap before it, or past it on a phone) and in at row i —
-    // never through L's other cells; the new entry gets its own frame
-    const a0 = xVal + wval + 12;
-    const [lbl0, lbr0] = L.lb;
-    const fromLeft = a0 < lbl0 - 24;
-    const vx = fromLeft ? lbl0 - 18 : lbr0 + 16;
-    const ex = fromLeft ? lbl0 - 5 : lbr0 + 5;
-    const yi = L.lys[e.i];
-    const dir = yi < axis ? -1 : 1;
-    const rr = 8;
-    const d = `M ${a0} ${axis} H ${vx - rr} Q ${vx} ${axis} ${vx} ${axis + dir * rr} V ${yi - dir * rr} Q ${vx} ${yi} ${vx + (fromLeft ? rr : -rr)} ${yi} H ${ex}`;
-    below = (
-      <g key={`m${idx}`}>
-        <g className="lum-in" style={{ fontFamily: MATH }}>
-          <text x={fx} y={base} fontSize={f} fontStyle="italic" fill={orange}>
-            m
-          </text>
-          <text x={xEq1} y={base} fontSize={f} fill={ink}>
-            =
-          </text>
-          <text
-            x={xFr + wfr / 2}
-            y={axis - 5}
-            textAnchor="middle"
-            fontSize={fs}
-            fill={orange}
-          >
-            {under}
-          </text>
-          <line
-            x1={xFr}
-            x2={xFr + wfr}
-            y1={axis}
-            y2={axis}
-            stroke={ink}
-            strokeWidth={1.1}
-          />
-          <text
-            x={xFr + wfr / 2}
-            y={axis + fs * 0.98}
-            textAnchor="middle"
-            fontSize={fs}
-            fill={blue}
-          >
-            {piv}
-          </text>
-          <text x={xEq2} y={base} fontSize={f} fill={ink}>
-            =
-          </text>
-          <Num
-            a={e.l}
-            x={xVal + wval / 2}
-            y={e.l.d === 1 ? base - f * 0.34 : axis}
-            f={f}
-            fill={orange}
-          />
-        </g>
-        <path
-          className="lum-in lum-late"
-          d={d}
-          stroke={orange}
-          strokeWidth={1.5}
-          strokeDasharray="5 4"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          className="lum-in lum-later"
-          d={head(ex, yi, fromLeft ? 0 : Math.PI, 6)}
-          stroke={orange}
-          strokeWidth={1.5}
-          fill="none"
-          strokeLinecap="round"
-        />
-      </g>
-    );
-  }
   let arrow: ReactNode = null;
   if (e && !finished && ph === 2) {
-    // the row operation: pen arrow from the pivot row, and the row sum under the matrix
+    // the row operation: a pen arrow from the pivot row to the row
     const y1 = L.ys[e.k];
     const y2 = L.ys[e.i];
     const x0 = L.bl - 6;
-    const xl = L.bl - 30;
+    const xl = L.arrowXl;
     const rr = 9;
     const d = `M ${x0} ${y1} H ${xl + rr} Q ${xl} ${y1} ${xl} ${y1 + rr} V ${y2 - rr} Q ${xl} ${y2} ${xl + rr} ${y2} H ${x0}`;
     arrow = (
@@ -582,46 +452,16 @@ function LuMaskin({ params }: { params: P }) {
         />
       </g>
     );
-    const f = narrow ? 15 : 18;
-    const tup = (row: Frac[], hi: string) =>
-      row.map((v, c) => (
-        <tspan key={c} fill={c === e.k ? hi : ink}>
-          {(c ? ", " : "") + fTxt(v)}
-        </tspan>
-      ));
-    const neg = e.l.n < 0;
-    const parts = [
-      ...before[e.i].map(fTxt),
-      ...before[e.k].map(fTxt),
-      ...e.after[e.i].map(fTxt),
-    ].join(", ");
-    const w = textW(`(${parts}) − (${fTxt(e.l)}) · () = ()`, f);
-    const x = Math.max(8, Math.min(matCx - w / 2, L.vw - 8 - w));
-    below = (
-      <text
-        key={`sum${idx}`}
-        className="lum-in lum-late"
-        x={x}
-        y={L.mathY + f * 0.3}
-        fontSize={f}
-        fill={ink}
-        style={{ fontFamily: MATH }}
-      >
-        ({tup(before[e.i], orange)}) − {neg ? "(" : ""}
-        <tspan fill={orange}>{fTxt(e.l)}</tspan>
-        {neg ? ")" : ""} · ({tup(before[e.k], blue)}) = (
-        {tup(e.after[e.i], ink)})
-      </text>
-    );
   }
 
   /* ---------------------------------------------------------------- the receipt */
   const C = L.card;
   const zig = (() => {
     const k = Math.round(C.w / 10);
-    let d = `M ${C.x} ${C.y} H ${C.x + C.w} V ${C.y + C.h}`;
+    const body = C.h - 6; // the teeth end level with the matrices' bottom
+    let d = `M ${C.x} ${C.y} H ${C.x + C.w} V ${C.y + body}`;
     for (let q = k - 1; q >= 0; q--)
-      d += ` L ${C.x + (q + 0.5) * (C.w / k)} ${C.y + C.h + 6} L ${C.x + q * (C.w / k)} ${C.y + C.h}`;
+      d += ` L ${C.x + (q + 0.5) * (C.w / k)} ${C.y + C.h} L ${C.x + q * (C.w / k)} ${C.y + body}`;
     return d + " Z";
   })();
   const lines = onReceipt.map((s, q) => {
@@ -636,8 +476,8 @@ function LuMaskin({ params }: { params: P }) {
             ? "lum-in lum-late"
             : undefined
         }
-        x={C.x + 18}
-        y={C.y0 + q * C.step}
+        x={C.x + 16}
+        y={C.lineYs[q] + f * 0.34}
         fontSize={f}
         fill={ink}
         style={{ fontFamily: MATH }}
@@ -673,10 +513,10 @@ function LuMaskin({ params }: { params: P }) {
           m ? (
             <g
               key={`l${r}${c}${isNew ? idx : ""}`}
-              className={isNew ? "lum-pop lum-later" : undefined}
+              className={isNew ? "lum-pop" : undefined}
             >
-              {isNew ? frame(x, y, L.lcw - 6, L.lf * 1.5, orange) : null}
-              <Num a={m} x={x} y={y} f={L.lf} fill={orange} />
+              {isNew ? frame(x, y, L.cw - 10, L.rh - 10, orange) : null}
+              <Num a={m} x={x} y={y} f={L.f} fill={orange} />
             </g>
           ) : (
             <circle
@@ -694,9 +534,9 @@ function LuMaskin({ params }: { params: P }) {
           <text
             key={`l${r}${c}`}
             x={x}
-            y={y + L.lf * 0.34}
+            y={y + L.f * 0.34}
             textAnchor="middle"
-            fontSize={L.lf}
+            fontSize={L.f}
             fill={c === r ? ink : muted}
             style={{ fontFamily: MATH }}
           >
@@ -740,17 +580,16 @@ function LuMaskin({ params }: { params: P }) {
         />
         {cells}
         {arrow}
-        {below}
         {/* the receipt */}
         <path d={zig} fill="var(--kt-bg-panel)" />
-        {caps(C.x + C.w / 2, L.card.y + 18, "KVITTERING", muted)}
+        {caps(C.x + C.w / 2, L.cardLabelY, "KVITTERING", muted)}
         {lines}
         {/* L */}
         {caps((lbl + lbr) / 2, L.lLabelY, "L", orange)}
         <path
-          d={brackets(lbl, lbr, lbt, lbb, 7)}
+          d={brackets(lbl, lbr, lbt, lbb, 10)}
           stroke={ink}
-          strokeWidth={1.4}
+          strokeWidth={1.8}
           fill="none"
         />
         {lcells}
@@ -829,7 +668,7 @@ function LuMaskin({ params }: { params: P }) {
 registerTemplate({
   id: "lu-maskin",
   description:
-    "LU-maskinen side ved side (ARBEIDSKOPI | KVITTERING | L, versal-etiketter over) med tre tydelige trinn for hvert tall under en pivot: 1 pivot og tallet under markeres, 2 multiplikatoren m = under ÷ pivot vises under matrisen og føres med en pil rett inn i L, 3 pennepil fra pivotraden, radregningen under matrisen og ny rad + kvitteringslinje. En liten trinnviser (1 PIVOT · 2 MULTIPLIKATOR → L · 3 TREKK FRA) i stedet for statussetninger (W17). Uten radbytter (Doolittle), eksakte brøker (stablet); quiz:correct når L og U er ferdige.",
+    "LU-maskinen side ved side: ARBEIDSKOPI | KVITTERING | L som tre like brede og like høye blokker med versal-etikett over (bredden avhenger bare av størrelsen, aldri av tallene). Tre tydelige trinn for hvert tall under en pivot: 1 pivot og tallet under rammes inn, 2 multiplikatoren lander i L, 3 pennepil fra pivotraden, ny rad og kvitteringslinje. Ingen utregninger eller setninger på widgeten — en liten trinnviser (1 PIVOT · 2 MULTIPLIKATOR → L · 3 TREKK FRA) viser hvor man er. Uten radbytter (Doolittle), eksakte brøker (stablet); quiz:correct når L og U er ferdige.",
   curriculum: ["universitet", "TMA4400"],
   params: {
     matrise: {

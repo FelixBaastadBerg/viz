@@ -491,6 +491,8 @@ input[type="range"].kviz-slider--lead::-webkit-slider-thumb {
 .kviz-widget .lum-stepper > span { display: inline-flex; align-items: center; gap: 7px; opacity: 0.5; transition: opacity var(--kt-dur-fade, 200ms), color var(--kt-dur-fade, 200ms); }
 .kviz-widget .lum-stepper > span.is-done { opacity: 0.85; }
 .kviz-widget .lum-stepper > span.is-on { opacity: 1; color: var(--kt-touch-ink); }
+/* W18: the status line and the stepper take the same slot, so the widget never changes height between steps */
+.kviz-lum .kviz-capline:not(.is-small), .kviz-widget.kviz-lum .lum-stepper { box-sizing: content-box; height: 22px; min-height: 22px; line-height: 22px; margin: 12px auto 0; }
 .kviz-widget .lum-stepper .lum-n { display: inline-grid; place-items: center; width: 18px; height: 18px; border: 1.3px solid currentColor; border-radius: 50%; font-size: 10px; letter-spacing: 0; }
 @media (max-width: 480px) {
   .kviz-widget .lum-stepper { gap: 6px 12px; font-size: 10px; letter-spacing: 0.08em; }
