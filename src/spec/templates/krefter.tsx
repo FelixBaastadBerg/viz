@@ -2,8 +2,10 @@
     style. The student drags the orange force until the sum of the forces is zero — and that IS the solution: no «Sjekk»
     button, the widget notices («bevege armen til summen = 0 og da har man … løst widgeten»).
     Chrome as the LU machine (Felix: «LU widgeten … ser veldig mye bedre ut»): one card top left with the forces and
-    their sum as a small aligned calculation, the figure on the stage, then the centred pill row, one centred status
-    line and a small step counter. Brilliant ideas (viz/BRILLIANT-INSPIRASJON.md): steps inside the widget («steg 1 av
+    their sum as a small aligned calculation, the figure on the stage, then the centred pill row. Text kept to the
+    three W17 voices (Felix 2026-10-15: «det er nettopp når det blir mye tekst i en widget at det blir stygt»): the
+    card, readout labels on the arrows, and one centred caps status — the goal before, «LIKEVEKT» after — with a caps
+    step counter. The instruction sentence belongs in the page text above the widget. Brilliant ideas (viz/BRILLIANT-INSPIRASJON.md): steps inside the widget («steg 1 av
     3»), a hint that is a mark on the figure (not more text), a short orange pulse when it balances, and the force
     polygon shown only as the «aha» once the last step is solved. Colours follow the video order (V53): fixed F₁ blue,
     fixed F₂ yellow, the force you drag orange, the sum ΣF in ink. */
@@ -11,7 +13,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Circle, Point, Polygon, Vector } from "mafs";
 import { KPlot } from "../../2d/KPlot";
 import { KPoint, KLabel } from "../../2d/primitives";
-import { KFig, KFormula, KMixed } from "../../chrome";
+import { KFig, KFormula } from "../../chrome";
 import { useKtTheme } from "../../theme/ThemeProvider";
 import type { KtRole } from "../../theme/types";
 import { registerTemplate } from "../registry";
@@ -22,7 +24,6 @@ type V2 = [number, number];
 interface Step {
   fixed: V2[];
   start: V2;
-  text: string;
 }
 
 /** A label just past a vector's tip, pushed out along the vector so it never sits on the arrow head. */
@@ -40,13 +41,9 @@ const pairs = (flat: number[]): V2[] => {
 
 /** The built-in progression (Brilliant: «one small mental leap» per step). */
 const STEPS: Step[] = [
-  { fixed: [[-3, 0]], start: [1.6, 1.6], text: "Én kraft drar rett mot venstre. Dra $\\vec F_2$ så summen blir null." },
-  { fixed: [[-2.6, -1.4]], start: [1.6, 0.8], text: "Nå drar kraften på skrå. Finn $\\vec F_2$ som opphever den." },
-  {
-    fixed: [[-2.8, -0.4], [0.8, -2.0]],
-    start: [1.0, 0.6],
-    text: "To krefter er gitt. Dra $\\vec F_3$ så alle tre er i likevekt.",
-  },
+  { fixed: [[-3, 0]], start: [1.6, 1.6] }, // straight against
+  { fixed: [[-2.6, -1.4]], start: [1.6, 0.8] }, // at a slant
+  { fixed: [[-2.8, -0.4], [0.8, -2.0]], start: [1.0, 0.6] }, // three forces
 ];
 
 // layout inline: hosts like TipTap's `div[data-node-view-wrapper] div { display/flex: inherit }` override classes
@@ -67,7 +64,7 @@ function Kraftbalanse({ params }: { params: P }) {
   const steps: Step[] =
     params.steg === true
       ? STEPS
-      : [{ fixed: pairs(params.faste as number[]), start: params.dra as V2, text: params.oppgave as string }];
+      : [{ fixed: pairs(params.faste as number[]), start: params.dra as V2 }];
 
   const [si, setSi] = useState(0); // current step
   const step = steps[si];
@@ -135,19 +132,13 @@ function Kraftbalanse({ params }: { params: P }) {
   const showPolygon = done && fixed.length > 1; // the «aha»: the forces tip to tail close up
   const w = t.stroke.curveSecondary;
   const ink = t.text.primary;
-  const say = (s: string) => s.split("{n}").join(String(n));
   const inView = (p: V2): V2 => [
     Math.max(-half + 0.35, Math.min(half - 0.35, p[0])),
     Math.max(-half * 0.55 + 0.3, Math.min(half * 0.55 - 0.3, p[1])),
   ];
 
-  const status = done
-    ? last
-      ? (params.riktig as string)
-      : "Likevekt: $\\Sigma \\vec F = \\vec 0$. Trykk «Neste steg»."
-    : hint
-      ? say(params.hintTekst as string)
-      : say(step.text);
+  // W17: one centred caps status — the goal until it balances, then the result (the hint lives on the figure)
+  const status = done ? (params.riktig as string) : (params.oppgave as string);
 
   return (
     <div className="kviz-widget kviz-kraft">
@@ -242,12 +233,10 @@ function Kraftbalanse({ params }: { params: P }) {
           Nullstill
         </button>
       </div>
-      <p className={done ? "lu-status is-done" : "lu-status"} aria-live="polite">
-        <KMixed text={status} />
+      <p className={done ? "kviz-capline is-done" : "kviz-capline"} aria-live="polite">
+        {status}
       </p>
-      <p className="lu-steps">
-        {steps.length > 1 ? `steg ${si + 1} av ${steps.length}` : (params.fot as string)}
-      </p>
+      {steps.length > 1 ? <p className="kviz-capline is-small">{`steg ${si + 1} / ${steps.length}`}</p> : null}
     </div>
   );
 }
@@ -255,7 +244,7 @@ function Kraftbalanse({ params }: { params: P }) {
 registerTemplate({
   id: "kraftbalanse",
   description:
-    "Likevekt: én eller to krefter ligger fast, eleven drar den siste til summen blir null — det er løsningen (ingen «Sjekk»). Kort oppe til venstre med kreftene og summen som en liten utregning; LU-maskinens kontrollrad (Vis hint / Nullstill, eller Forrige / Neste steg i stegmodus) og statuslinje. Hint = stiplet pil på figuren; oransje puls ved likevekt; kraftpolygonet vises når siste steg er løst. `steg: true` gir tre innebygde steg (rett imot → på skrå → tre krefter). Emitterer quiz:correct når siste steg er løst.",
+    "Likevekt: én eller to krefter ligger fast, eleven drar den siste til summen blir null — det er løsningen (ingen «Sjekk»). Kort oppe til venstre med kreftene og summen som en liten utregning; LU-maskinens kontrollrad (Vis hint / Nullstill, eller Forrige / Neste steg i stegmodus) og én sentrert versal-status (W17: målet før, «LIKEVEKT» etter; instruksjonen står i sideteksten over). Hint = stiplet pil på figuren; oransje puls ved likevekt; kraftpolygonet vises når siste steg er løst. `steg: true` gir tre innebygde steg (rett imot → på skrå → tre krefter). Emitterer quiz:correct når siste steg er løst.",
   curriculum: ["R1", "FY1", "TMA4400"],
   params: {
     faste: { type: { kind: "numbers" }, default: [-3, -1.2], doc: "de faste kreftene, flatt: [x1, y1] eller [x1, y1, x2, y2]" },
@@ -265,10 +254,8 @@ registerTemplate({
     snap: { type: { kind: "number", min: 0.01, max: 1 }, default: 0.1, doc: "kraften fester seg til dette rutenettet" },
     utsnitt: { type: { kind: "number", min: 2, max: 12 }, default: 4.6, doc: "halv bredde av utsnittet" },
     korttittel: { type: { kind: "string" }, default: "Kreftene", doc: "merkelappen på kortet" },
-    oppgave: { type: { kind: "string" }, default: "Dra $\\vec F_{n}$ så summen av kreftene blir null.", doc: "statuslinja før likevekt ($…$ for matte, {n} = kraften man drar)" },
-    hintTekst: { type: { kind: "string" }, default: "Den stiplede pila viser hvor spissen av $\\vec F_{n}$ må.", doc: "statuslinja når hintet vises" },
-    riktig: { type: { kind: "string" }, default: "Likevekt: $\\Sigma \\vec F = \\vec 0$. Kreftene opphever hverandre.", doc: "statuslinja når oppgaven er løst" },
-    fot: { type: { kind: "string" }, default: "dra den oransje kraften", doc: "den lille linja nederst (uten steg)" },
+    oppgave: { type: { kind: "string" }, default: "Mål · summen = 0", doc: "sentrert versal-status før likevekt — ett til tre ord, ingen setning (W17); instruksjonen står i sideteksten" },
+    riktig: { type: { kind: "string" }, default: "Likevekt", doc: "sentrert versal-status når det er i likevekt (oransje)" },
     quizId: { type: { kind: "string" }, default: "kraftbalanse", doc: "id i quiz:correct-hendelsen (verten krysser av «widget»)" },
     height: { type: { kind: "number", min: 200, max: 640 }, default: 320, doc: "høyde i px" },
   },
