@@ -160,13 +160,13 @@ function Kraftbalanse({ params }: { params: P }) {
         >
           {showPolygon ? (
             <>
-              <Polygon points={chain} color={t.accents.touch.stroke} fillOpacity={0.16} strokeOpacity={0} />
-              <g style={{ opacity: 0.45 }}>
-                {fixed.slice(1).map((v, k) => (
-                  <Vector key={k} tail={chain[k + 1]} tip={chain[k + 2]} color={t.accents[roles[k + 1]].stroke} weight={w} />
-                ))}
-                <Vector tail={chain[n - 1]} tip={chain[n]} color={t.accents.touch.stroke} weight={w} />
-              </g>
+              {/* a solid lighter field (V54 value fields) — orange is never translucent over the grey stage (it reads brown) */}
+              <Polygon points={chain} color={t.stage.panelRaised} fillOpacity={1} strokeOpacity={0} />
+              {/* the moved copies tip to tail: dashed in full colour (never faded — faded orange on grey goes muddy) */}
+              {fixed.slice(1).map((v, k) => (
+                <Vector key={k} tail={chain[k + 1]} tip={chain[k + 2]} color={t.accents[roles[k + 1]].stroke} weight={2} style="dashed" />
+              ))}
+              <Vector tail={chain[n - 1]} tip={chain[n]} color={t.accents.touch.stroke} weight={2} style="dashed" />
             </>
           ) : null}
           {hint && !done ? (
