@@ -470,10 +470,26 @@ input[type="range"].kviz-slider--lead::-webkit-slider-thumb {
 .kviz-forcecard .katex { font-size: 1.05em; color: var(--kt-text); }
 
 /* -------------------------------------------------- kraftbalanse: the LU machine's chrome (Felix 2026-10-15: one design) */
-.kviz-kraft .lu-ctrl { justify-content: center; gap: 8px; border-top: 1px solid var(--kt-border); margin-top: 12px; padding-top: 12px; flex-wrap: wrap; }
-.kviz-kraft .lu-pill { border-radius: 999px; font-weight: 600; }
-.kviz-kraft .lu-main { background: var(--kt-touch-ink); border-color: var(--kt-touch-ink); color: #fff; }
+.kviz-kraft .lu-ctrl, .kviz-lum .lu-ctrl { justify-content: center; gap: 8px; border-top: 1px solid var(--kt-border); margin-top: 12px; padding-top: 12px; flex-wrap: wrap; }
+.kviz-kraft .lu-pill, .kviz-lum .lu-pill { border-radius: 999px; font-weight: 600; }
+.kviz-kraft .lu-main, .kviz-lum .lu-main { background: var(--kt-touch-ink); border-color: var(--kt-touch-ink); color: #fff; }
 /* W17: text in a widget is a caps readout, a card, or this one centred caps status — never a sentence */
-.kviz-kraft .kviz-capline { margin: 12px auto 0; min-height: 1.4em; text-align: center; font-family: var(--kt-font-ui); font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--kt-text-muted); }
-.kviz-kraft .kviz-capline.is-done { color: var(--kt-touch-ink); }
-.kviz-kraft .kviz-capline.is-small { margin-top: 4px; min-height: 0; font-size: 10.5px; letter-spacing: 0.14em; opacity: 0.8; }
+.kviz-widget .kviz-capline { margin: 12px auto 0; min-height: 1.4em; text-align: center; font-family: var(--kt-font-caps, var(--kt-font-ui)); font-size: 12px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--kt-text-muted); }
+.kviz-widget .kviz-capline.is-done { color: var(--kt-touch-ink); }
+.kviz-widget .kviz-capline.is-small { margin-top: 4px; min-height: 0; font-size: 10.5px; letter-spacing: 0.14em; opacity: 0.8; }
+
+/* -------------------------------------------------- lu-maskin: the video's board as a widget (W17, Felix 2026-10-15) */
+.kviz-lum { text-align: center; }
+.kviz-lum .lum-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: lum-draw 0.55s var(--kt-ease-smooth, ease-out) forwards; }
+.kviz-lum .lum-in { animation: lum-in 0.4s ease-out both; }
+.kviz-lum .lum-late { animation-delay: 0.45s; }
+.kviz-lum .lum-pop { transform-box: fill-box; transform-origin: center; animation: lum-pop 0.45s cubic-bezier(0.3, 1.5, 0.5, 1) 0.35s both; }
+.kviz-lum .lum-halo { transform-box: fill-box; transform-origin: center; animation: lum-halo 1.8s ease-in-out infinite; }
+@keyframes lum-draw { to { stroke-dashoffset: 0; } }
+@keyframes lum-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lum-pop { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+@keyframes lum-halo { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.12); opacity: 0.55; } }
+@media (prefers-reduced-motion: reduce) {
+  .kviz-lum .lum-draw { animation: none; stroke-dashoffset: 0; }
+  .kviz-lum .lum-in, .kviz-lum .lum-pop, .kviz-lum .lum-halo { animation: none; }
+}

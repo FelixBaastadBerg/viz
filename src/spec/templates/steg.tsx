@@ -20,7 +20,7 @@ type P = Record<string, unknown>;
 /* ================================================================ gauss-steg */
 
 /** Exact rational arithmetic so the row operations stay pretty. */
-interface Frac {
+export interface Frac {
   n: number;
   d: number; // always > 0
 }
@@ -42,7 +42,7 @@ function frac(n: number, d = 1): Frac {
 }
 
 /** Convert a (possibly decimal) input number to an exact-ish fraction. */
-function fromNumber(v: number): Frac {
+export function fromNumber(v: number): Frac {
   if (Number.isInteger(v)) return { n: v, d: 1 };
   for (let d = 2; d <= 1000; d++) {
     const n = v * d;
@@ -227,7 +227,7 @@ registerTemplate({
 
 /** Plain-text number for the hand-drawn (video) style: "−1", "3/2", "¼". */
 const VULGAR: Record<string, string> = { "1/2": "½", "1/3": "⅓", "2/3": "⅔", "1/4": "¼", "3/4": "¾" };
-function fTxt(a: Frac): string {
+export function fTxt(a: Frac): string {
   const sign = a.n < 0 ? "−" : "";
   const n = Math.abs(a.n);
   if (a.d === 1) return sign + n;
@@ -236,7 +236,7 @@ function fTxt(a: Frac): string {
 const SUBS = "₀₁₂₃₄₅₆₇₈₉";
 const sub = (k: number) => String(k).split("").map((c) => SUBS[+c]).join("");
 
-interface LuStep {
+export interface LuStep {
   k: number; // pivot column/row
   i: number; // row being eliminated
   l: Frac; // multiplier l_ik
@@ -246,7 +246,7 @@ interface LuStep {
 }
 
 /** Doolittle LU without row exchanges, one step per eliminated row. */
-function luSteps(m0: Frac[][]): { steps: LuStep[]; error?: string } {
+export function luSteps(m0: Frac[][]): { steps: LuStep[]; error?: string } {
   const n = m0.length;
   const u = m0.map((r) => r.slice());
   const steps: LuStep[] = [];

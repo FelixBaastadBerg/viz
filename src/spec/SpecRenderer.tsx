@@ -13,6 +13,7 @@ import "./templates/omdreining3d";
 import "./templates/dijkstra";
 import "./templates/steg";
 import "./templates/krefter";
+import "./templates/lumaskin";
 
 /**
  * Render a widget spec. Invalid specs render the validation errors instead of
