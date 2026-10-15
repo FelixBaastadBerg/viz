@@ -472,9 +472,24 @@ input[type="range"].kviz-slider--lead::-webkit-slider-thumb {
 .kviz-challenge-row { display: flex; align-items: center; gap: 12px; }
 .kviz-challenge-box { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border: 1.5px solid var(--kt-text-muted); border-radius: 5px; font-size: 14px; font-weight: 700; line-height: 1; color: var(--kt-bg); }
 .kviz-challenge-box.is-done { background: var(--kt-touch); border-color: var(--kt-touch); }
-.kviz-challenge-t { flex: 1; margin: 0; font-family: var(--kt-font-ui); font-size: 18px; color: var(--kt-text); }
+.kviz-challenge-t { flex: 1; min-width: 0; margin: 0; font-family: var(--kt-font-ui); font-size: 18px; line-height: 1.35; color: var(--kt-text); }
 .kviz-challenge-btn { flex: none; border-radius: 999px; }
-.kviz-challenge-fb { margin: 0 0 0 34px; min-height: 1.5em; font-family: var(--kt-font-ui); font-size: 16px; color: var(--kt-text-muted); }
+.kviz-challenge-fb { margin: 0 0 0 34px; min-height: 1.5em; line-height: 1.4; font-family: var(--kt-font-ui); font-size: 16px; color: var(--kt-text-muted); }
 .kviz-challenge-fb.is-good { color: var(--kt-touch-ink); }
 .kviz-challenge-fb.is-bad::before { content: "✕  "; }
 .kviz-challenge-fb.is-good::before { content: "✓  "; }
+.kviz-challenge.is-card { border-top: 0; margin-top: 0; padding: 18px 18px 16px; border-radius: 14px; background: var(--kt-bg-panel); }
+.kviz-challenge.is-card .kviz-challenge-fb { margin-left: 0; }
+.kviz-challenge.is-card .kviz-challenge-t { font-size: 17px; }
+.kviz-challenge.is-card .kviz-challenge-box { margin-top: 1px; }
+.kviz-field .MafsView { --mafs-bg: transparent; }
+.kviz-meter-l { flex: none; font-size: 15px; color: var(--kt-text); }
+.kviz-meter-track { height: 8px; border-radius: 999px; background: var(--kt-border); overflow: hidden; }
+.kviz-meter-fill { height: 100%; border-radius: 999px; background: var(--kt-text); transition: width 120ms linear, background 200ms; }
+.kviz-meter-fill.is-zero { background: var(--kt-touch); }
+.kviz-meter-v { flex: none; min-width: 3.2em; text-align: right; font-family: var(--kt-font-ui); font-variant-numeric: tabular-nums; font-size: 15px; color: var(--kt-text); }
+/* side by side only where there is room: on a phone the figure comes first and the card under it */
+@media (max-width: 700px) {
+  .kviz-kraft-side { grid-template-columns: minmax(0, 1fr) !important; }
+  .kviz-kraft-side > .kviz-challenge { order: 2; }
+}
